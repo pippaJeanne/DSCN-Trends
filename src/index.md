@@ -82,7 +82,7 @@ display(Plot.plot({height: 360, x: {label: "Publication year", tickFormat: d => 
 ```js
 const viewof trendRubric = Inputs.select(Object.entries(rubrics), {label: "Trend rubric", format: ([name]) => name, value: ["subjects", "subject_tags"]});
 const trendTags = enriched.flatMap(d => splitTags(d[trendRubric[1]]).map(tag => ({year: d.year, tag, period: period(d.year)})));
-const topTrendTags = tagCounts.slice(0, 8).map(d => d.tag);
+const topTrendTags = countBy(trendTags, d => d.tag).sort((a, b) => b.count - a.count).slice(0, 8).map(d => d.key);
 display(Plot.plot({height: 420, x: {label: "Year", tickFormat: d => d}, y: {label: "Articles carrying tag", grid: true}, color: {legend: true}, marks: [Plot.lineY(trendTags.filter(d => topTrendTags.includes(d.tag)), {x: "year", y: 1, z: "tag", stroke: "tag", curve: "step", tip: true}), Plot.dot(trendTags.filter(d => topTrendTags.includes(d.tag)), {x: "year", y: 1, stroke: "tag"})]}));
 ```
 
