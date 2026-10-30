@@ -46,14 +46,14 @@ display(html`<div class="card">${overview.map(([label, value]) => html`<span sty
 Choose one rubric to view its full tag distribution. Select a tag to reveal the complete cluster of associated articles and direct links for verification.
 
 ```js
-const viewof rubric = Inputs.radio(Object.entries(rubrics), {label: "Rubric", format: ([name]) => name[0].toUpperCase() + name.slice(1), value: ["subjects", "subject_tags"]});
+const rubric = view(Inputs.radio(Object.keys(rubrics), {label: "Rubric", format: name => name[0].toUpperCase() + name.slice(1), value: "subjects"}));
 ```
 
 ```js
-const selectedRubric = rubric[1];
+const selectedRubric = rubrics[rubric];
 const tagRows = enriched.flatMap(d => splitTags(d[selectedRubric]).map(tag => ({tag, title: d.title, url: d.url, year: d.year, language: d.language, special: d.special})));
 const tagCounts = countBy(tagRows, d => d.tag).map(d => ({tag: d.key, count: d.count})).sort((a,b) => b.count-a.count || a.tag.localeCompare(b.tag));
-const viewof tag = Inputs.select(tagCounts.map(d => d.tag), {label: "Tag cluster", value: tagCounts[0]?.tag});
+const tag = view(Inputs.select(tagCounts.map(d => d.tag), {label: "Tag cluster", value: tagCounts[0]?.tag}));
 ```
 
 ```js
@@ -80,8 +80,8 @@ display(Plot.plot({height: 360, x: {label: "Publication year", tickFormat: d => 
 ```
 
 ```js
-const viewof trendRubric = Inputs.select(Object.entries(rubrics), {label: "Trend rubric", format: ([name]) => name, value: ["subjects", "subject_tags"]});
-const trendTags = enriched.flatMap(d => splitTags(d[trendRubric[1]]).map(tag => ({year: d.year, tag, period: period(d.year)})));
+const trendRubric = view(Inputs.select(Object.keys(rubrics), {label: "Trend rubric", value: "subjects"}));
+const trendTags = enriched.flatMap(d => splitTags(d[rubrics[trendRubric]]).map(tag => ({year: d.year, tag, period: period(d.year)})));
 const topTrendTags = countBy(trendTags, d => d.tag).sort((a, b) => b.count - a.count).slice(0, 8).map(d => d.key);
 display(Plot.plot({height: 420, x: {label: "Year", tickFormat: d => d}, y: {label: "Articles carrying tag", grid: true}, color: {legend: true}, marks: [Plot.lineY(trendTags.filter(d => topTrendTags.includes(d.tag)), {x: "year", y: 1, z: "tag", stroke: "tag", curve: "step", tip: true}), Plot.dot(trendTags.filter(d => topTrendTags.includes(d.tag)), {x: "year", y: 1, stroke: "tag"})]}));
 ```
@@ -92,7 +92,7 @@ Special issues are first treated as independent clusters. The comparison table c
 
 ```js
 const issues = Array.from(new Set(enriched.filter(d => d.special).map(d => d.issue))).sort();
-const viewof selectedIssue = Inputs.select(issues, {label: "Special issue / collection"});
+const selectedIssue = view(Inputs.select(issues, {label: "Special issue / collection"}));
 const issueArticles = enriched.filter(d => d.issue === selectedIssue);
 const issuePeriod = period(issueArticles[0]?.year);
 const peerArticles = enriched.filter(d => period(d.year) === issuePeriod);
@@ -104,7 +104,7 @@ const issueComparison = Array.from(new Set([...iCounts.keys(), ...pCounts.keys()
 ```
 
 ```js
-display(html`<div class="card"><strong>${issueArticles.length} articles · publication period ${issuePeriod}</strong><table><thead><tr><th>Tag (${rubric[0]})</th><th>Issue</th><th>Period rate</th><th>Difference</th></tr></thead><tbody>${issueComparison.map(d => html`<tr><td>${d.tag}</td><td>${d.issue}</td><td>${d.periodRate.toLocaleString(undefined,{style:"percent",maximumFractionDigits:0})}</td><td>${(d.issueRate-d.periodRate).toLocaleString(undefined,{style:"percent",signDisplay:"always",maximumFractionDigits:0})}</td></tr>`)}</tbody></table></div>`);
+display(html`<div class="card"><strong>${issueArticles.length} articles · publication period ${issuePeriod}</strong><table><thead><tr><th>Tag (${rubric})</th><th>Issue</th><th>Period rate</th><th>Difference</th></tr></thead><tbody>${issueComparison.map(d => html`<tr><td>${d.tag}</td><td>${d.issue}</td><td>${d.periodRate.toLocaleString(undefined,{style:"percent",maximumFractionDigits:0})}</td><td>${(d.issueRate-d.periodRate).toLocaleString(undefined,{style:"percent",signDisplay:"always",maximumFractionDigits:0})}</td></tr>`)}</tbody></table></div>`);
 display(html`<div class="card"><strong>Article access — read the issue cluster</strong><ul>${issueArticles.sort((a,b) => a.title.localeCompare(b.title)).map(d => html`<li><a href=${d.url} target="_blank" rel="noopener">${d.title}</a> (${d.year})</li>`)}</ul></div>`);
 ```
 
@@ -118,7 +118,7 @@ const outliers = enriched.filter(d => {
   const tags = splitTags(d[selectedRubric]);
   return tags.some(t => globalCounts.get(t) === 1 || /unclear|not specified/i.test(t));
 });
-display(html`<div class="card"><strong>${outliers.length} boundary/outlier articles for ${rubric[0]}</strong><table><thead><tr><th>Year</th><th>Article</th><th>Tags triggering review</th></tr></thead><tbody>${outliers.sort((a,b) => b.year-a.year).map(d => html`<tr><td>${d.year}</td><td><a href=${d.url} target="_blank" rel="noopener">${d.title}</a></td><td>${splitTags(d[selectedRubric]).filter(t => globalCounts.get(t) === 1 || /unclear|not specified/i.test(t)).join("; ")}</td></tr>`)}</tbody></table></div>`);
+display(html`<div class="card"><strong>${outliers.length} boundary/outlier articles for ${rubric}</strong><table><thead><tr><th>Year</th><th>Article</th><th>Tags triggering review</th></tr></thead><tbody>${outliers.sort((a,b) => b.year-a.year).map(d => html`<tr><td>${d.year}</td><td><a href=${d.url} target="_blank" rel="noopener">${d.title}</a></td><td>${splitTags(d[selectedRubric]).filter(t => globalCounts.get(t) === 1 || /unclear|not specified/i.test(t)).join("; ")}</td></tr>`)}</tbody></table></div>`);
 ```
 
 <div class="note">The article links deliberately point to the DOI landing pages supplied by the corpus, so each charted claim can be checked against the published item.</div>
