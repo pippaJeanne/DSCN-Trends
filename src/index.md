@@ -34,7 +34,7 @@ const period = (year) => year <= 2005 ? "1996–2005" : year <= 2015 ? "2006–2
 ```js
 const overview = [
   ["articles", enriched.length],
-  ["years covered", `${Plot.min(enriched, d => d.year)}–${Plot.max(enriched, d => d.year)}`],
+  ["years covered", `${Math.min(...enriched.map(d => d.year))}–${Math.max(...enriched.map(d => d.year))}`],
   ["special-issue articles", enriched.filter(d => d.special).length],
   ["tag assignments", Object.values(rubrics).reduce((n, col) => n + enriched.reduce((a, d) => a + splitTags(d[col]).length, 0), 0)]
 ];

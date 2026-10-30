@@ -83,10 +83,10 @@ const period = (year) => year <= 2005 ? "1996–2005" : year <= 2015 ? "2006–2
 return {Plot,Inputs,html,articles,rubrics,splitTags,countBy,languageOf,enriched,period};
 }});
 
-define({id: "16ccdc1c", inputs: ["enriched","Plot","rubrics","splitTags","display","html"], outputs: ["overview"], body: (enriched,Plot,rubrics,splitTags,display,html) => {
+define({id: "81ba17e0", inputs: ["enriched","rubrics","splitTags","display","html"], outputs: ["overview"], body: (enriched,rubrics,splitTags,display,html) => {
 const overview = [
   ["articles", enriched.length],
-  ["years covered", `${Plot.min(enriched, d => d.year)}–${Plot.max(enriched, d => d.year)}`],
+  ["years covered", `${Math.min(...enriched.map(d => d.year))}–${Math.max(...enriched.map(d => d.year))}`],
   ["special-issue articles", enriched.filter(d => d.special).length],
   ["tag assignments", Object.values(rubrics).reduce((n, col) => n + enriched.reduce((a, d) => a + splitTags(d[col]).length, 0), 0)]
 ];
@@ -140,7 +140,7 @@ return {globalCounts,outliers};
 <div class="note"><strong>How to read this atlas.</strong> Articles may carry more than one tag in a rubric, so tag totals are not mutually exclusive. Every bar can be checked against its linked article list. “Unclear” and “context not specified” remain visible rather than being treated as substantive findings.</div>
 <div class="observablehq observablehq--block"><!--:9a5fd01b:--></div>
 <h2 id="corpus-at-a-glance" tabindex="-1"><a class="observablehq-header-anchor" href="#corpus-at-a-glance">Corpus at a glance</a></h2>
-<div class="observablehq observablehq--block"><!--:16ccdc1c:--></div>
+<div class="observablehq observablehq--block"><!--:81ba17e0:--></div>
 <h2 id="tag-clusters-and-article-evidence" tabindex="-1"><a class="observablehq-header-anchor" href="#tag-clusters-and-article-evidence">Tag clusters and article evidence</a></h2>
 <p>Choose one rubric to view its full tag distribution. Select a tag to reveal the complete cluster of associated articles and direct links for verification.</p>
 <div class="observablehq observablehq--block">
@@ -169,7 +169,7 @@ return {globalCounts,outliers};
 <div class="note">The article links deliberately point to the DOI landing pages supplied by the corpus, so each charted claim can be checked against the published item.</div>
 </main>
 <footer id="observablehq-footer">
-<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-30T03:25:18">Oct 30, 2026</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-30T03:31:00">Oct 30, 2026</a>.</div>
 </footer>
 </div>
 </body>
