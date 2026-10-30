@@ -10,7 +10,7 @@ title: DSCN Scope Atlas
 
 ```js
 import * as Plot from "npm:@observablehq/plot";
-import {Inputs} from "npm:@observablehq/inputs";
+import * as Inputs from "npm:@observablehq/inputs";
 import {html} from "npm:htl";
 const articles = await FileAttachment("data/articles.csv").csv({typed: true});
 const rubrics = {

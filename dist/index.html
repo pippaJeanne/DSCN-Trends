@@ -63,8 +63,8 @@ import {registerFile} from "./_observablehq/stdlib.c4209144.js";
 
 registerFile("./data/articles.csv", {"name":"./data/articles.csv","mimeType":"text/csv","path":"./_file/data/articles.7d3edc9e.csv","lastModified":1793343951351,"size":882775});
 
-define({id: "9a5fd01b", inputs: ["FileAttachment"], outputs: ["Plot","Inputs","html","articles","rubrics","splitTags","countBy","languageOf","enriched","period"], body: async (FileAttachment) => {
-const [Plot, {Inputs}, {html}] = await Promise.all([import("./_npm/@observablehq/plot@0.6.17/93ce672e.js"), import("./_observablehq/stdlib/inputs.0cc910eb.js"), import("./_npm/htl@1.0.0/11521f02.js")]);
+define({id: "726da670", inputs: ["FileAttachment"], outputs: ["Plot","Inputs","html","articles","rubrics","splitTags","countBy","languageOf","enriched","period"], body: async (FileAttachment) => {
+const [Plot, Inputs, {html}] = await Promise.all([import("./_npm/@observablehq/plot@0.6.17/93ce672e.js"), import("./_observablehq/stdlib/inputs.0cc910eb.js"), import("./_npm/htl@1.0.0/11521f02.js")]);
 const articles = await FileAttachment("./data/articles.csv").csv({typed: true});
 const rubrics = {
   subjects: "subject_tags",
@@ -173,7 +173,7 @@ return {globalCounts,outliers};
 <h1 id="dscn-scope-atlas" tabindex="-1"><a class="observablehq-header-anchor" href="#dscn-scope-atlas">DSCN Scope Atlas</a></h1>
 <p class="lede">An article-level map of <em>Digital Studies / Le champ numérique</em>: what it studies, how it works, what it works on, what it contributes, and where its evidence is situated.</p>
 <div class="note"><strong>How to read this atlas.</strong> Articles may carry more than one tag in a rubric, so tag totals are not mutually exclusive. Every bar can be checked against its linked article list. “Unclear” and “context not specified” remain visible rather than being treated as substantive findings.</div>
-<div class="observablehq observablehq--block"><!--:9a5fd01b:--></div>
+<div class="observablehq observablehq--block"><!--:726da670:--></div>
 <h2 id="corpus-at-a-glance" tabindex="-1"><a class="observablehq-header-anchor" href="#corpus-at-a-glance">Corpus at a glance</a></h2>
 <div class="observablehq observablehq--block"><!--:81ba17e0:--></div>
 <h2 id="tag-clusters-and-article-evidence" tabindex="-1"><a class="observablehq-header-anchor" href="#tag-clusters-and-article-evidence">Tag clusters and article evidence</a></h2>
@@ -196,7 +196,7 @@ return {globalCounts,outliers};
 <div class="note">The article links deliberately point to the DOI landing pages supplied by the corpus, so each charted claim can be checked against the published item.</div>
 </main>
 <footer id="observablehq-footer">
-<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-30T03:36:13">Oct 30, 2026</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-30T03:41:39">Oct 30, 2026</a>.</div>
 </footer>
 </div>
 </body>
