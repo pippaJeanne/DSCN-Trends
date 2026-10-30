@@ -1,0 +1,11 @@
+:root { --theme-foreground: #1f2937; --theme-background: #f7f4ed; --theme-foreground-focus: #075985; --theme-foreground-muted: #55616f; }
+body { font-family: ui-sans-serif, system-ui, sans-serif; background: #f7f4ed; }
+h1, h2 { color: #153b4b; letter-spacing: -.02em; }
+h1 { font-size: clamp(2.3rem, 5vw, 4.6rem); max-width: 15ch; line-height: .95; }
+h2 { border-top: 1px solid #bfd3d5; padding-top: 1.25rem; margin-top: 3rem; }
+.lede { font-size: 1.17rem; max-width: 70ch; color: #364452; }
+.note { background: #e4eeea; padding: .9rem 1rem; border-left: 4px solid #2e7d70; max-width: 85ch; }
+.card { background: white; border: 1px solid #d6ded8; border-radius: 10px; padding: 1rem; margin: .75rem 0; }
+table { width: 100%; background: white; font-size: .92rem; }
+th { background: #153b4b; color: white; } td, th { padding: .5rem; vertical-align: top; }
+a { color: #075985; }

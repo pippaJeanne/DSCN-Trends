@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="generator" content="Observable Framework v1.13.4">
+<title>DSCN Scope Atlas</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.b050d634.css">
+<link rel="preload" as="style" href="./_observablehq/stdlib/inputs.f7bf0e12.css">
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.b050d634.css">
+<link rel="stylesheet" type="text/css" href="./_observablehq/stdlib/inputs.f7bf0e12.css">
+<link rel="modulepreload" href="./_observablehq/client.ae6b380c.js">
+<link rel="modulepreload" href="./_observablehq/runtime.13bc3751.js">
+<link rel="modulepreload" href="./_observablehq/stdlib.c4209144.js">
+<link rel="modulepreload" href="./_npm/@observablehq/plot@0.6.17/93ce672e.js">
+<link rel="modulepreload" href="./_observablehq/stdlib/inputs.0cc910eb.js">
+<link rel="modulepreload" href="./_npm/htl@1.0.0/11521f02.js">
+<link rel="modulepreload" href="./_npm/d3-dsv@3.0.1/097745a2.js">
+<link rel="modulepreload" href="./_npm/isoformat@0.2.1/604cb63b.js">
+<link rel="modulepreload" href="./_npm/d3@7.9.0/080cf928.js">
+<link rel="modulepreload" href="./_npm/interval-tree-1d@1.0.4/f53f17b2.js">
+<link rel="modulepreload" href="./_npm/d3-array@3.2.4/b8e751b6.js">
+<link rel="modulepreload" href="./_npm/d3-axis@3.0.0/c662ea05.js">
+<link rel="modulepreload" href="./_npm/d3-brush@3.0.0/d162d8c6.js">
+<link rel="modulepreload" href="./_npm/d3-chord@3.0.1/5cedd0be.js">
+<link rel="modulepreload" href="./_npm/d3-color@3.1.0/65d51007.js">
+<link rel="modulepreload" href="./_npm/d3-contour@4.0.2/c576a91a.js">
+<link rel="modulepreload" href="./_npm/d3-delaunay@6.0.4/8b43826d.js">
+<link rel="modulepreload" href="./_npm/d3-dispatch@3.0.1/3fb06f14.js">
+<link rel="modulepreload" href="./_npm/d3-drag@3.0.0/20b76948.js">
+<link rel="modulepreload" href="./_npm/d3-ease@3.0.1/8683b012.js">
+<link rel="modulepreload" href="./_npm/d3-fetch@3.0.1/5c319046.js">
+<link rel="modulepreload" href="./_npm/d3-force@3.0.0/33924f3e.js">
+<link rel="modulepreload" href="./_npm/d3-format@3.1.2/8d67a1ae.js">
+<link rel="modulepreload" href="./_npm/d3-geo@3.1.1/8037bd0b.js">
+<link rel="modulepreload" href="./_npm/d3-hierarchy@3.1.2/a9ba0229.js">
+<link rel="modulepreload" href="./_npm/d3-interpolate@3.0.1/e0a47f97.js">
+<link rel="modulepreload" href="./_npm/d3-path@3.1.0/f9e9e0ab.js">
+<link rel="modulepreload" href="./_npm/d3-polygon@3.0.1/2da8eb3b.js">
+<link rel="modulepreload" href="./_npm/d3-quadtree@3.0.1/09002e01.js">
+<link rel="modulepreload" href="./_npm/d3-random@3.0.1/5108797c.js">
+<link rel="modulepreload" href="./_npm/d3-scale@4.0.2/c9f2571b.js">
+<link rel="modulepreload" href="./_npm/d3-scale-chromatic@3.1.0/f3c78e0d.js">
+<link rel="modulepreload" href="./_npm/d3-selection@3.0.0/28717d05.js">
+<link rel="modulepreload" href="./_npm/d3-shape@3.2.0/7c6e2a50.js">
+<link rel="modulepreload" href="./_npm/d3-time@3.1.0/3d1d57c6.js">
+<link rel="modulepreload" href="./_npm/d3-time-format@4.1.0/643581a8.js">
+<link rel="modulepreload" href="./_npm/d3-timer@3.0.1/e99232db.js">
+<link rel="modulepreload" href="./_npm/d3-transition@3.0.1/bd07fd9a.js">
+<link rel="modulepreload" href="./_npm/d3-zoom@3.0.0/d09f7cc9.js">
+<link rel="modulepreload" href="./_npm/binary-search-bounds@2.0.5/5f640032.js">
+<link rel="modulepreload" href="./_npm/internmap@2.0.3/af036d7e.js">
+<link rel="modulepreload" href="./_npm/delaunator@5.1.0/7b06abe7.js">
+<link rel="modulepreload" href="./_npm/robust-predicates@3.0.3/b42f30a7.js">
+<meta name="description" content="Interactive scope analysis of DSCN articles.">
+<script type="module">
+
+import {define} from "./_observablehq/client.ae6b380c.js";
+import {registerFile} from "./_observablehq/stdlib.c4209144.js";
+
+registerFile("./data/articles.csv", {"name":"./data/articles.csv","mimeType":"text/csv","path":"./_file/data/articles.7d3edc9e.csv","lastModified":1793343951351,"size":882775});
+
+define({id: "9a5fd01b", inputs: ["FileAttachment"], outputs: ["Plot","Inputs","html","articles","rubrics","splitTags","countBy","languageOf","enriched","period"], body: async (FileAttachment) => {
+const [Plot, {Inputs}, {html}] = await Promise.all([import("./_npm/@observablehq/plot@0.6.17/93ce672e.js"), import("./_observablehq/stdlib/inputs.0cc910eb.js"), import("./_npm/htl@1.0.0/11521f02.js")]);
+const articles = await FileAttachment("./data/articles.csv").csv({typed: true});
+const rubrics = {
+  subjects: "subject_tags",
+  methodology: "method_tags",
+  material: "material_tags",
+  contribution: "contribution_tags",
+  context: "context_tags"
+};
+const splitTags = (value) => (value || "").split(";").map(d => d.trim()).filter(Boolean);
+const countBy = (values, key) => Array.from(values.reduce((counts, value) => {
+  const k = key(value); counts.set(k, (counts.get(k) || 0) + 1); return counts;
+}, new Map()), ([key, count]) => ({key, count}));
+const languageOf = (d) => /[àâçéèêëîïôûùüÿœ]|\b(le|la|les|des|une|dans|pour|avec|sur|et)\b/i.test(`${d.title} ${d.abstract}`) ? "French or bilingual" : "English";
+const enriched = articles.map(d => ({...d, year: +d.year, language: languageOf(d), special: d.special_issue === "Yes"}));
+const period = (year) => year <= 2005 ? "1996–2005" : year <= 2015 ? "2006–2015" : year <= 2020 ? "2016–2020" : "2021–2026";
+return {Plot,Inputs,html,articles,rubrics,splitTags,countBy,languageOf,enriched,period};
+}});
+
+define({id: "16ccdc1c", inputs: ["enriched","Plot","rubrics","splitTags","display","html"], outputs: ["overview"], body: (enriched,Plot,rubrics,splitTags,display,html) => {
+const overview = [
+  ["articles", enriched.length],
+  ["years covered", `${Plot.min(enriched, d => d.year)}–${Plot.max(enriched, d => d.year)}`],
+  ["special-issue articles", enriched.filter(d => d.special).length],
+  ["tag assignments", Object.values(rubrics).reduce((n, col) => n + enriched.reduce((a, d) => a + splitTags(d[col]).length, 0), 0)]
+];
+display(html`<div class="card">${overview.map(([label, value]) => html`<span style="display:inline-block;min-width:10rem;margin:.25rem 1rem .25rem 0"><strong>${value}</strong><br><small>${label}</small></span>`)}</div>`)
+return {overview};
+}});
+
+define({id: "16738f25", inputs: ["display","Plot","tagCounts"], body: (display,Plot,tagCounts) => {
+display(Plot.plot({
+  marginLeft: 185, height: Math.max(340, tagCounts.length * 24),
+  x: {label: "Articles (articles may appear in several clusters)", grid: true},
+  y: {label: null},
+  marks: [Plot.barX(tagCounts, {x: "count", y: "tag", sort: {y: "-x"}, fill: "#0f766e"}), Plot.text(tagCounts, {x: "count", y: "tag", text: "count", dx: 8, textAnchor: "start"})]
+}));
+}});
+
+define({id: "613c5ee0", inputs: ["tagRows","tag","display","html"], outputs: ["cluster"], body: (tagRows,tag,display,html) => {
+const cluster = tagRows.filter(d => d.tag === tag).sort((a,b) => b.year-a.year || a.title.localeCompare(b.title));
+display(html`<div class="card"><strong>${cluster.length} articles in “${tag}”</strong><table><thead><tr><th>Year</th><th>Article</th><th>Language</th><th>Special issue</th></tr></thead><tbody>${cluster.map(d => html`<tr><td>${d.year}</td><td><a href=${d.url} target="_blank" rel="noopener">${d.title}</a></td><td>${d.language}</td><td>${d.special ? "Yes" : "No"}</td></tr>`)}</tbody></table></div>`);
+return {cluster};
+}});
+
+define({id: "2d0f5379", inputs: ["countBy","enriched","display","Plot"], outputs: ["years"], body: (countBy,enriched,display,Plot) => {
+const years = countBy(enriched, d => `${d.year}|${d.language}`).map(d => { const [year, language] = d.key.split("|"); return {year: +year, language, count: d.count}; });
+display(Plot.plot({height: 360, x: {label: "Publication year", tickFormat: d => d}, y: {label: "Articles", grid: true}, color: {legend: true}, marks: [Plot.rectY(years, {x: "year", y: "count", fill: "language", interval: 1, tip: true}), Plot.ruleY([0])]}));
+return {years};
+}});
+
+define({id: "fa0a52ad", inputs: ["display","html","issueArticles","issuePeriod","rubric","issueComparison"], body: (display,html,issueArticles,issuePeriod,rubric,issueComparison) => {
+display(html`<div class="card"><strong>${issueArticles.length} articles · publication period ${issuePeriod}</strong><table><thead><tr><th>Tag (${rubric[0]})</th><th>Issue</th><th>Period rate</th><th>Difference</th></tr></thead><tbody>${issueComparison.map(d => html`<tr><td>${d.tag}</td><td>${d.issue}</td><td>${d.periodRate.toLocaleString(undefined,{style:"percent",maximumFractionDigits:0})}</td><td>${(d.issueRate-d.periodRate).toLocaleString(undefined,{style:"percent",signDisplay:"always",maximumFractionDigits:0})}</td></tr>`)}</tbody></table></div>`);
+display(html`<div class="card"><strong>Article access — read the issue cluster</strong><ul>${issueArticles.sort((a,b) => a.title.localeCompare(b.title)).map(d => html`<li><a href=${d.url} target="_blank" rel="noopener">${d.title}</a> (${d.year})</li>`)}</ul></div>`);
+}});
+
+define({id: "f7c35876", inputs: ["tagCounts","enriched","splitTags","selectedRubric","display","html","rubric"], outputs: ["globalCounts","outliers"], body: (tagCounts,enriched,splitTags,selectedRubric,display,html,rubric) => {
+const globalCounts = new Map(tagCounts.map(d => [d.tag, d.count]));
+const outliers = enriched.filter(d => {
+  const tags = splitTags(d[selectedRubric]);
+  return tags.some(t => globalCounts.get(t) === 1 || /unclear|not specified/i.test(t));
+});
+display(html`<div class="card"><strong>${outliers.length} boundary/outlier articles for ${rubric[0]}</strong><table><thead><tr><th>Year</th><th>Article</th><th>Tags triggering review</th></tr></thead><tbody>${outliers.sort((a,b) => b.year-a.year).map(d => html`<tr><td>${d.year}</td><td><a href=${d.url} target="_blank" rel="noopener">${d.title}</a></td><td>${splitTags(d[selectedRubric]).filter(t => globalCounts.get(t) === 1 || /unclear|not specified/i.test(t)).join("; ")}</td></tr>`)}</tbody></table></div>`);
+return {globalCounts,outliers};
+}});
+
+</script>
+</head>
+<body>
+<div id="observablehq-center">
+<main id="observablehq-main" class="observablehq">
+<h1 id="dscn-scope-atlas" tabindex="-1"><a class="observablehq-header-anchor" href="#dscn-scope-atlas">DSCN Scope Atlas</a></h1>
+<p class="lede">An article-level map of <em>Digital Studies / Le champ numérique</em>: what it studies, how it works, what it works on, what it contributes, and where its evidence is situated.</p>
+<div class="note"><strong>How to read this atlas.</strong> Articles may carry more than one tag in a rubric, so tag totals are not mutually exclusive. Every bar can be checked against its linked article list. “Unclear” and “context not specified” remain visible rather than being treated as substantive findings.</div>
+<div class="observablehq observablehq--block"><!--:9a5fd01b:--></div>
+<h2 id="corpus-at-a-glance" tabindex="-1"><a class="observablehq-header-anchor" href="#corpus-at-a-glance">Corpus at a glance</a></h2>
+<div class="observablehq observablehq--block"><!--:16ccdc1c:--></div>
+<h2 id="tag-clusters-and-article-evidence" tabindex="-1"><a class="observablehq-header-anchor" href="#tag-clusters-and-article-evidence">Tag clusters and article evidence</a></h2>
+<p>Choose one rubric to view its full tag distribution. Select a tag to reveal the complete cluster of associated articles and direct links for verification.</p>
+<div class="observablehq observablehq--block">
+  <div class="observablehq--inspect observablehq--error">SyntaxError: Unexpected token (1:13)</div>
+</div>
+<div class="observablehq observablehq--block">
+  <div class="observablehq--inspect observablehq--error">SyntaxError: Unexpected token (4:13)</div>
+</div>
+<div class="observablehq observablehq--block"><!--:16738f25:--></div>
+<div class="observablehq observablehq--block"><!--:613c5ee0:--></div>
+<h2 id="trends-through-time-and-language" tabindex="-1"><a class="observablehq-header-anchor" href="#trends-through-time-and-language">Trends through time and language</a></h2>
+<p>This view counts articles by year and tracks language as a transparent title/abstract-based classification. It is intended as a descriptive aid, especially where bilingual abstracts are present.</p>
+<div class="observablehq observablehq--block"><!--:2d0f5379:--></div>
+<div class="observablehq observablehq--block">
+  <div class="observablehq--inspect observablehq--error">SyntaxError: Unexpected token (1:13)</div>
+</div>
+<h2 id="special-issues-within-issue-and-period-comparison" tabindex="-1"><a class="observablehq-header-anchor" href="#special-issues-within-issue-and-period-comparison">Special issues: within-issue and period comparison</a></h2>
+<p>Special issues are first treated as independent clusters. The comparison table contrasts each special issue’s tag frequency with the tag frequency for its publication period across the whole corpus. A positive percentage-point difference signals a tag unusually concentrated in that issue; it does not establish a general editorial trend.</p>
+<div class="observablehq observablehq--block">
+  <div class="observablehq--inspect observablehq--error">SyntaxError: Unexpected token (2:13)</div>
+</div>
+<div class="observablehq observablehq--block"><!--:fa0a52ad:--></div>
+<h2 id="outliers-and-boundary-cases" tabindex="-1"><a class="observablehq-header-anchor" href="#outliers-and-boundary-cases">Outliers and boundary cases</a></h2>
+<p>Outliers are operationalised here as articles whose selected-rubric tag occurs only once in the corpus, plus records marked <em>unclear</em> or <em>context not specified</em>. These are not errors: they are the records most worth reading when testing the observed scope.</p>
+<div class="observablehq observablehq--block"><!--:f7c35876:--></div>
+<div class="note">The article links deliberately point to the DOI landing pages supplied by the corpus, so each charted claim can be checked against the published item.</div>
+</main>
+<footer id="observablehq-footer">
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-30T03:10:28">Oct 30, 2026</a>.</div>
+</footer>
+</div>
+</body>
+</html>
