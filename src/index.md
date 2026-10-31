@@ -41,9 +41,39 @@ const overview = [
 display(html`<div class="card">${overview.map(([label, value]) => html`<span style="display:inline-block;min-width:10rem;margin:.25rem 1rem .25rem 0"><strong>${value}</strong><br><small>${label}</small></span>`)}</div>`)
 ```
 
-## Tag clusters and article evidence
+## Five-rubric overview: clusters over time
 
-Choose one rubric to view its full tag distribution. Select a tag to reveal the complete cluster of associated articles and direct links for verification.
+Each heatmap is a distinct overview graph for one rubric. Rows are tag clusters; columns are publication periods; colour records the number of articles carrying that tag per 100 articles in the period. Tags are ordered by overall frequency and the twelve most recurrent clusters are shown, so the pattern remains readable before drilling into article-level evidence.
+
+```js
+const periodOrder = ["1996–2005", "2006–2015", "2016–2020", "2021–2026"];
+const periodSizes = new Map(periodOrder.map(name => [name, enriched.filter(d => period(d.year) === name).length]));
+const rubricOverview = Object.fromEntries(Object.entries(rubrics).map(([name, column]) => {
+  const assignments = enriched.flatMap(d => splitTags(d[column]).map(tag => ({tag, period: period(d.year)})));
+  const totals = new Map(countBy(assignments, d => d.tag).map(d => [d.key, d.count]));
+  const tags = Array.from(totals, ([tag, count]) => ({tag, count})).sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag)).slice(0, 12).map(d => d.tag);
+  const cells = tags.flatMap(tag => periodOrder.map(window => ({tag, period: window, count: assignments.filter(d => d.tag === tag && d.period === window).length, rate: 100 * assignments.filter(d => d.tag === tag && d.period === window).length / periodSizes.get(window)})));
+  return [name, {tags, cells}];
+}));
+const rubricTitles = {subjects: "Subjects", methodology: "Methodology", material: "Material", contribution: "Contribution", context: "Context"};
+```
+
+```js
+for (const name of Object.keys(rubrics)) {
+  const {tags, cells} = rubricOverview[name];
+  display(html`<div class="card"><strong>${rubricTitles[name]}</strong><br><small>Top twelve tag clusters, normalised to the number of articles published in each period.</small></div>`);
+  display(Plot.plot({
+    marginLeft: 190, height: Math.max(260, tags.length * 25 + 105),
+    x: {domain: periodOrder, label: "Publication period"}, y: {domain: tags, label: null},
+    color: {type: "linear", scheme: "teal", legend: true, label: "Articles per 100"},
+    marks: [Plot.cell(cells, {x: "period", y: "tag", fill: "rate", inset: 1, tip: true}), Plot.text(cells, {x: "period", y: "tag", text: d => d.count || "", fill: d => d.rate > 35 ? "white" : "#153b4b"})]
+  }));
+}
+```
+
+## Explore tag clusters and article evidence
+
+After comparing the five overview charts, choose a rubric and tag to inspect its full distribution and the complete cluster of linked articles.
 
 ```js
 const rubric = view(Inputs.radio(Object.keys(rubrics), {label: "Rubric", format: name => name[0].toUpperCase() + name.slice(1), value: "subjects"}));

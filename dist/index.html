@@ -94,6 +94,33 @@ display(html`<div class="card">${overview.map(([label, value]) => html`<span sty
 return {overview};
 }});
 
+define({id: "07f8e2b6", inputs: ["enriched","period","rubrics","splitTags","countBy"], outputs: ["periodOrder","periodSizes","rubricOverview","rubricTitles"], body: (enriched,period,rubrics,splitTags,countBy) => {
+const periodOrder = ["1996–2005", "2006–2015", "2016–2020", "2021–2026"];
+const periodSizes = new Map(periodOrder.map(name => [name, enriched.filter(d => period(d.year) === name).length]));
+const rubricOverview = Object.fromEntries(Object.entries(rubrics).map(([name, column]) => {
+  const assignments = enriched.flatMap(d => splitTags(d[column]).map(tag => ({tag, period: period(d.year)})));
+  const totals = new Map(countBy(assignments, d => d.tag).map(d => [d.key, d.count]));
+  const tags = Array.from(totals, ([tag, count]) => ({tag, count})).sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag)).slice(0, 12).map(d => d.tag);
+  const cells = tags.flatMap(tag => periodOrder.map(window => ({tag, period: window, count: assignments.filter(d => d.tag === tag && d.period === window).length, rate: 100 * assignments.filter(d => d.tag === tag && d.period === window).length / periodSizes.get(window)})));
+  return [name, {tags, cells}];
+}));
+const rubricTitles = {subjects: "Subjects", methodology: "Methodology", material: "Material", contribution: "Contribution", context: "Context"};
+return {periodOrder,periodSizes,rubricOverview,rubricTitles};
+}});
+
+define({id: "d2053429", inputs: ["rubrics","rubricOverview","display","html","rubricTitles","Plot","periodOrder"], body: (rubrics,rubricOverview,display,html,rubricTitles,Plot,periodOrder) => {
+for (const name of Object.keys(rubrics)) {
+  const {tags, cells} = rubricOverview[name];
+  display(html`<div class="card"><strong>${rubricTitles[name]}</strong><br><small>Top twelve tag clusters, normalised to the number of articles published in each period.</small></div>`);
+  display(Plot.plot({
+    marginLeft: 190, height: Math.max(260, tags.length * 25 + 105),
+    x: {domain: periodOrder, label: "Publication period"}, y: {domain: tags, label: null},
+    color: {type: "linear", scheme: "teal", legend: true, label: "Articles per 100"},
+    marks: [Plot.cell(cells, {x: "period", y: "tag", fill: "rate", inset: 1, tip: true}), Plot.text(cells, {x: "period", y: "tag", text: d => d.count || "", fill: d => d.rate > 35 ? "white" : "#153b4b"})]
+  }));
+}
+}});
+
 define({id: "84a1df2a", inputs: ["view","Inputs","rubrics"], outputs: ["rubric"], body: (view,Inputs,rubrics) => {
 const rubric = view(Inputs.radio(Object.keys(rubrics), {label: "Rubric", format: name => name[0].toUpperCase() + name.slice(1), value: "subjects"}));
 return {rubric};
@@ -176,8 +203,12 @@ return {globalCounts,outliers};
 <div class="observablehq observablehq--block"><!--:726da670:--></div>
 <h2 id="corpus-at-a-glance" tabindex="-1"><a class="observablehq-header-anchor" href="#corpus-at-a-glance">Corpus at a glance</a></h2>
 <div class="observablehq observablehq--block"><!--:81ba17e0:--></div>
-<h2 id="tag-clusters-and-article-evidence" tabindex="-1"><a class="observablehq-header-anchor" href="#tag-clusters-and-article-evidence">Tag clusters and article evidence</a></h2>
-<p>Choose one rubric to view its full tag distribution. Select a tag to reveal the complete cluster of associated articles and direct links for verification.</p>
+<h2 id="five-rubric-overview-clusters-over-time" tabindex="-1"><a class="observablehq-header-anchor" href="#five-rubric-overview-clusters-over-time">Five-rubric overview: clusters over time</a></h2>
+<p>Each heatmap is a distinct overview graph for one rubric. Rows are tag clusters; columns are publication periods; colour records the number of articles carrying that tag per 100 articles in the period. Tags are ordered by overall frequency and the twelve most recurrent clusters are shown, so the pattern remains readable before drilling into article-level evidence.</p>
+<div class="observablehq observablehq--block"><!--:07f8e2b6:--></div>
+<div class="observablehq observablehq--block"><!--:d2053429:--></div>
+<h2 id="explore-tag-clusters-and-article-evidence" tabindex="-1"><a class="observablehq-header-anchor" href="#explore-tag-clusters-and-article-evidence">Explore tag clusters and article evidence</a></h2>
+<p>After comparing the five overview charts, choose a rubric and tag to inspect its full distribution and the complete cluster of linked articles.</p>
 <div class="observablehq observablehq--block"><!--:84a1df2a:--></div>
 <div class="observablehq observablehq--block"><!--:5b61c3b7:--></div>
 <div class="observablehq observablehq--block"><!--:16738f25:--></div>
@@ -196,7 +227,7 @@ return {globalCounts,outliers};
 <div class="note">The article links deliberately point to the DOI landing pages supplied by the corpus, so each charted claim can be checked against the published item.</div>
 </main>
 <footer id="observablehq-footer">
-<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-30T03:41:39">Oct 30, 2026</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-30T23:51:14">Oct 30, 2026</a>.</div>
 </footer>
 </div>
 </body>
