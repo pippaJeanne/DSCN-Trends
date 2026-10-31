@@ -24,7 +24,7 @@ const splitTags = (value) => (value || "").split(";").map(d => d.trim()).filter(
 const countBy = (values, key) => Array.from(values.reduce((counts, value) => {
   const k = key(value); counts.set(k, (counts.get(k) || 0) + 1); return counts;
 }, new Map()), ([key, count]) => ({key, count}));
-const languageOf = (d) => /[àâçéèêëîïôûùüÿœ]|\b(le|la|les|des|une|dans|pour|avec|sur|et)\b/i.test(`${d.title} ${d.abstract}`) ? "French or bilingual" : "English";
+const languageOf = (d) => /[àâçéèêëîïôûùüÿœ]|\b(le|la|les|des|une|dans|pour|avec|sur|et)\b/i.test(`${d.title}`) ? "French" : "English";
 const enriched = articles.map(d => ({...d, year: +d.year, language: languageOf(d), special: d.special_issue === "Yes"}));
 const period = (year) => year <= 2005 ? "1996–2005" : year <= 2015 ? "2006–2015" : year <= 2020 ? "2016–2020" : "2021–2026";
 ```
@@ -113,7 +113,11 @@ display(Plot.plot({height: 360, x: {label: "Publication year", tickFormat: d => 
 const trendRubric = view(Inputs.select(Object.keys(rubrics), {label: "Trend rubric", value: "subjects"}));
 const trendTags = enriched.flatMap(d => splitTags(d[rubrics[trendRubric]]).map(tag => ({year: d.year, tag, period: period(d.year)})));
 const topTrendTags = countBy(trendTags, d => d.tag).sort((a, b) => b.count - a.count).slice(0, 8).map(d => d.key);
-display(Plot.plot({height: 420, x: {label: "Year", tickFormat: d => d}, y: {label: "Articles carrying tag", grid: true}, color: {legend: true}, marks: [Plot.lineY(trendTags.filter(d => topTrendTags.includes(d.tag)), {x: "year", y: 1, z: "tag", stroke: "tag", curve: "step", tip: true}), Plot.dot(trendTags.filter(d => topTrendTags.includes(d.tag)), {x: "year", y: 1, stroke: "tag"})]}));
+const trendSeries = countBy(trendTags.filter(d => topTrendTags.includes(d.tag)), d => `${d.year}|${d.tag}`).map(d => {
+  const [year, tag] = d.key.split("|");
+  return {year: +year, tag, count: d.count};
+});
+display(Plot.plot({height: 420, x: {label: "Year", tickFormat: d => d}, y: {label: "Articles carrying tag", grid: true}, color: {legend: true}, marks: [Plot.lineY(trendSeries, {x: "year", y: "count", z: "tag", stroke: "tag", curve: "step", tip: true}), Plot.dot(trendSeries, {x: "year", y: "count", fill: "tag", r: 3, tip: true})]}));
 ```
 
 ## Special issues: within-issue and period comparison
@@ -122,15 +126,15 @@ Special issues are first treated as independent clusters. The comparison table c
 
 ```js
 const issues = Array.from(new Set(enriched.filter(d => d.special).map(d => d.issue))).sort();
-const selectedIssue = view(Inputs.select(issues, {label: "Special issue / collection"}));
+const selectedIssue = view(Inputs.select(issues, {label: "Special issue / collection", value: issues[0]}));
 const issueArticles = enriched.filter(d => d.issue === selectedIssue);
 const issuePeriod = period(issueArticles[0]?.year);
-const peerArticles = enriched.filter(d => period(d.year) === issuePeriod);
+const peerArticles = enriched.filter(d => period(d.year) === issuePeriod && d.issue !== selectedIssue);
 const issueTagRows = issueArticles.flatMap(d => splitTags(d[selectedRubric]).map(tag => ({tag})));
 const peerTagRows = peerArticles.flatMap(d => splitTags(d[selectedRubric]).map(tag => ({tag})));
 const counts = (rows) => new Map(countBy(rows, d => d.tag).map(d => [d.key, d.count]));
 const iCounts = counts(issueTagRows), pCounts = counts(peerTagRows);
-const issueComparison = Array.from(new Set([...iCounts.keys(), ...pCounts.keys()]), tag => ({tag, issue: iCounts.get(tag) || 0, issueRate: (iCounts.get(tag) || 0) / issueArticles.length, periodRate: (pCounts.get(tag) || 0) / peerArticles.length})).sort((a,b) => (b.issueRate-b.periodRate) || b.issue-a.issue);
+const issueComparison = Array.from(new Set([...iCounts.keys(), ...pCounts.keys()]), tag => ({tag, issue: iCounts.get(tag) || 0, issueRate: (iCounts.get(tag) || 0) / issueArticles.length, periodRate: peerArticles.length ? (pCounts.get(tag) || 0) / peerArticles.length : 0})).sort((a,b) => (b.issueRate-b.periodRate) || b.issue-a.issue);
 ```
 
 ```js

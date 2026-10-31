@@ -63,7 +63,7 @@ import {registerFile} from "./_observablehq/stdlib.c4209144.js";
 
 registerFile("./data/articles.csv", {"name":"./data/articles.csv","mimeType":"text/csv","path":"./_file/data/articles.7d3edc9e.csv","lastModified":1793343951351,"size":882775});
 
-define({id: "726da670", inputs: ["FileAttachment"], outputs: ["Plot","Inputs","html","articles","rubrics","splitTags","countBy","languageOf","enriched","period"], body: async (FileAttachment) => {
+define({id: "2b8d320d", inputs: ["FileAttachment"], outputs: ["Plot","Inputs","html","articles","rubrics","splitTags","countBy","languageOf","enriched","period"], body: async (FileAttachment) => {
 const [Plot, Inputs, {html}] = await Promise.all([import("./_npm/@observablehq/plot@0.6.17/93ce672e.js"), import("./_observablehq/stdlib/inputs.0cc910eb.js"), import("./_npm/htl@1.0.0/11521f02.js")]);
 const articles = await FileAttachment("./data/articles.csv").csv({typed: true});
 const rubrics = {
@@ -77,7 +77,7 @@ const splitTags = (value) => (value || "").split(";").map(d => d.trim()).filter(
 const countBy = (values, key) => Array.from(values.reduce((counts, value) => {
   const k = key(value); counts.set(k, (counts.get(k) || 0) + 1); return counts;
 }, new Map()), ([key, count]) => ({key, count}));
-const languageOf = (d) => /[àâçéèêëîïôûùüÿœ]|\b(le|la|les|des|une|dans|pour|avec|sur|et)\b/i.test(`${d.title} ${d.abstract}`) ? "French or bilingual" : "English";
+const languageOf = (d) => /[àâçéèêëîïôûùüÿœ]|\b(le|la|les|des|une|dans|pour|avec|sur|et)\b/i.test(`${d.title}`) ? "French" : "English";
 const enriched = articles.map(d => ({...d, year: +d.year, language: languageOf(d), special: d.special_issue === "Yes"}));
 const period = (year) => year <= 2005 ? "1996–2005" : year <= 2015 ? "2006–2015" : year <= 2020 ? "2016–2020" : "2021–2026";
 return {Plot,Inputs,html,articles,rubrics,splitTags,countBy,languageOf,enriched,period};
@@ -155,25 +155,29 @@ display(Plot.plot({height: 360, x: {label: "Publication year", tickFormat: d => 
 return {years};
 }});
 
-define({id: "503e1e39", inputs: ["view","Inputs","rubrics","enriched","splitTags","period","countBy","display","Plot"], outputs: ["trendRubric","trendTags","topTrendTags"], body: (view,Inputs,rubrics,enriched,splitTags,period,countBy,display,Plot) => {
+define({id: "db104b9a", inputs: ["view","Inputs","rubrics","enriched","splitTags","period","countBy","display","Plot"], outputs: ["trendRubric","trendTags","topTrendTags","trendSeries"], body: (view,Inputs,rubrics,enriched,splitTags,period,countBy,display,Plot) => {
 const trendRubric = view(Inputs.select(Object.keys(rubrics), {label: "Trend rubric", value: "subjects"}));
 const trendTags = enriched.flatMap(d => splitTags(d[rubrics[trendRubric]]).map(tag => ({year: d.year, tag, period: period(d.year)})));
 const topTrendTags = countBy(trendTags, d => d.tag).sort((a, b) => b.count - a.count).slice(0, 8).map(d => d.key);
-display(Plot.plot({height: 420, x: {label: "Year", tickFormat: d => d}, y: {label: "Articles carrying tag", grid: true}, color: {legend: true}, marks: [Plot.lineY(trendTags.filter(d => topTrendTags.includes(d.tag)), {x: "year", y: 1, z: "tag", stroke: "tag", curve: "step", tip: true}), Plot.dot(trendTags.filter(d => topTrendTags.includes(d.tag)), {x: "year", y: 1, stroke: "tag"})]}));
-return {trendRubric,trendTags,topTrendTags};
+const trendSeries = countBy(trendTags.filter(d => topTrendTags.includes(d.tag)), d => `${d.year}|${d.tag}`).map(d => {
+  const [year, tag] = d.key.split("|");
+  return {year: +year, tag, count: d.count};
+});
+display(Plot.plot({height: 420, x: {label: "Year", tickFormat: d => d}, y: {label: "Articles carrying tag", grid: true}, color: {legend: true}, marks: [Plot.lineY(trendSeries, {x: "year", y: "count", z: "tag", stroke: "tag", curve: "step", tip: true}), Plot.dot(trendSeries, {x: "year", y: "count", fill: "tag", r: 3, tip: true})]}));
+return {trendRubric,trendTags,topTrendTags,trendSeries};
 }});
 
-define({id: "cf3c6950", inputs: ["enriched","view","Inputs","period","splitTags","selectedRubric","countBy"], outputs: ["issues","selectedIssue","issueArticles","issuePeriod","peerArticles","issueTagRows","peerTagRows","counts","iCounts","pCounts","issueComparison"], body: (enriched,view,Inputs,period,splitTags,selectedRubric,countBy) => {
+define({id: "e68d59fb", inputs: ["enriched","view","Inputs","period","splitTags","selectedRubric","countBy"], outputs: ["issues","selectedIssue","issueArticles","issuePeriod","peerArticles","issueTagRows","peerTagRows","counts","iCounts","pCounts","issueComparison"], body: (enriched,view,Inputs,period,splitTags,selectedRubric,countBy) => {
 const issues = Array.from(new Set(enriched.filter(d => d.special).map(d => d.issue))).sort();
-const selectedIssue = view(Inputs.select(issues, {label: "Special issue / collection"}));
+const selectedIssue = view(Inputs.select(issues, {label: "Special issue / collection", value: issues[0]}));
 const issueArticles = enriched.filter(d => d.issue === selectedIssue);
 const issuePeriod = period(issueArticles[0]?.year);
-const peerArticles = enriched.filter(d => period(d.year) === issuePeriod);
+const peerArticles = enriched.filter(d => period(d.year) === issuePeriod && d.issue !== selectedIssue);
 const issueTagRows = issueArticles.flatMap(d => splitTags(d[selectedRubric]).map(tag => ({tag})));
 const peerTagRows = peerArticles.flatMap(d => splitTags(d[selectedRubric]).map(tag => ({tag})));
 const counts = (rows) => new Map(countBy(rows, d => d.tag).map(d => [d.key, d.count]));
 const iCounts = counts(issueTagRows), pCounts = counts(peerTagRows);
-const issueComparison = Array.from(new Set([...iCounts.keys(), ...pCounts.keys()]), tag => ({tag, issue: iCounts.get(tag) || 0, issueRate: (iCounts.get(tag) || 0) / issueArticles.length, periodRate: (pCounts.get(tag) || 0) / peerArticles.length})).sort((a,b) => (b.issueRate-b.periodRate) || b.issue-a.issue);
+const issueComparison = Array.from(new Set([...iCounts.keys(), ...pCounts.keys()]), tag => ({tag, issue: iCounts.get(tag) || 0, issueRate: (iCounts.get(tag) || 0) / issueArticles.length, periodRate: peerArticles.length ? (pCounts.get(tag) || 0) / peerArticles.length : 0})).sort((a,b) => (b.issueRate-b.periodRate) || b.issue-a.issue);
 return {issues,selectedIssue,issueArticles,issuePeriod,peerArticles,issueTagRows,peerTagRows,counts,iCounts,pCounts,issueComparison};
 }});
 
@@ -200,7 +204,7 @@ return {globalCounts,outliers};
 <h1 id="dscn-scope-atlas" tabindex="-1"><a class="observablehq-header-anchor" href="#dscn-scope-atlas">DSCN Scope Atlas</a></h1>
 <p class="lede">An article-level map of <em>Digital Studies / Le champ numérique</em>: what it studies, how it works, what it works on, what it contributes, and where its evidence is situated.</p>
 <div class="note"><strong>How to read this atlas.</strong> Articles may carry more than one tag in a rubric, so tag totals are not mutually exclusive. Every bar can be checked against its linked article list. “Unclear” and “context not specified” remain visible rather than being treated as substantive findings.</div>
-<div class="observablehq observablehq--block"><!--:726da670:--></div>
+<div class="observablehq observablehq--block"><!--:2b8d320d:--></div>
 <h2 id="corpus-at-a-glance" tabindex="-1"><a class="observablehq-header-anchor" href="#corpus-at-a-glance">Corpus at a glance</a></h2>
 <div class="observablehq observablehq--block"><!--:81ba17e0:--></div>
 <h2 id="five-rubric-overview-clusters-over-time" tabindex="-1"><a class="observablehq-header-anchor" href="#five-rubric-overview-clusters-over-time">Five-rubric overview: clusters over time</a></h2>
@@ -216,10 +220,10 @@ return {globalCounts,outliers};
 <h2 id="trends-through-time-and-language" tabindex="-1"><a class="observablehq-header-anchor" href="#trends-through-time-and-language">Trends through time and language</a></h2>
 <p>This view counts articles by year and tracks language as a transparent title/abstract-based classification. It is intended as a descriptive aid, especially where bilingual abstracts are present.</p>
 <div class="observablehq observablehq--block"><!--:2d0f5379:--></div>
-<div class="observablehq observablehq--block"><!--:503e1e39:--></div>
+<div class="observablehq observablehq--block"><!--:db104b9a:--></div>
 <h2 id="special-issues-within-issue-and-period-comparison" tabindex="-1"><a class="observablehq-header-anchor" href="#special-issues-within-issue-and-period-comparison">Special issues: within-issue and period comparison</a></h2>
 <p>Special issues are first treated as independent clusters. The comparison table contrasts each special issue’s tag frequency with the tag frequency for its publication period across the whole corpus. A positive percentage-point difference signals a tag unusually concentrated in that issue; it does not establish a general editorial trend.</p>
-<div class="observablehq observablehq--block"><!--:cf3c6950:--></div>
+<div class="observablehq observablehq--block"><!--:e68d59fb:--></div>
 <div class="observablehq observablehq--block"><!--:31ff4f87:--></div>
 <h2 id="outliers-and-boundary-cases" tabindex="-1"><a class="observablehq-header-anchor" href="#outliers-and-boundary-cases">Outliers and boundary cases</a></h2>
 <p>Outliers are operationalised here as articles whose selected-rubric tag occurs only once in the corpus, plus records marked <em>unclear</em> or <em>context not specified</em>. These are not errors: they are the records most worth reading when testing the observed scope.</p>
@@ -227,7 +231,7 @@ return {globalCounts,outliers};
 <div class="note">The article links deliberately point to the DOI landing pages supplied by the corpus, so each charted claim can be checked against the published item.</div>
 </main>
 <footer id="observablehq-footer">
-<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-30T23:54:43">Oct 30, 2026</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-31T03:06:40">Oct 31, 2026</a>.</div>
 </footer>
 </div>
 </body>
