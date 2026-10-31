@@ -65,7 +65,7 @@ for (const name of Object.keys(rubrics)) {
   display(Plot.plot({
     marginLeft: 190, height: Math.max(260, tags.length * 25 + 105),
     x: {domain: periodOrder, label: "Publication period"}, y: {domain: tags, label: null},
-    color: {type: "linear", scheme: "teal", legend: true, label: "Articles per 100"},
+    color: {type: "linear", range: ["#e4f3ef", "#0f766e"], legend: true, label: "Articles per 100"},
     marks: [Plot.cell(cells, {x: "period", y: "tag", fill: "rate", inset: 1, tip: true}), Plot.text(cells, {x: "period", y: "tag", text: d => d.count || "", fill: d => d.rate > 35 ? "white" : "#153b4b"})]
   }));
 }
