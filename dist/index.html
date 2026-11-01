@@ -157,12 +157,16 @@ display(Plot.plot({height: 360, x: {label: "Publication year", tickFormat: d => 
 return {years};
 }});
 
-define({id: "265234c9", inputs: ["view","Inputs","trendRubrics","rubricTitles","enriched","valuesFor","period","countBy","display","Plot"], outputs: ["trendRubric","trendField","trendTags","topTrendTags","trendSeries"], body: (view,Inputs,trendRubrics,rubricTitles,enriched,valuesFor,period,countBy,display,Plot) => {
+define({id: "4f36f4f9", inputs: ["view","Inputs","trendRubrics","rubricTitles"], outputs: ["trendRubric"], body: (view,Inputs,trendRubrics,rubricTitles) => {
 const trendRubric = view(Inputs.select(Object.keys(trendRubrics), {
   label: "Trend rubric",
   format: name => name === "articleType" ? "Article type" : rubricTitles[name],
   value: "subjects"
 }));
+return {trendRubric};
+}});
+
+define({id: "fdb5843c", inputs: ["trendRubrics","trendRubric","enriched","valuesFor","period","countBy","display","Plot"], outputs: ["trendField","trendTags","topTrendTags","trendSeries"], body: (trendRubrics,trendRubric,enriched,valuesFor,period,countBy,display,Plot) => {
 const trendField = trendRubrics[trendRubric];
 const trendTags = enriched.flatMap(d => valuesFor(d, trendField).map(tag => ({year: d.year, tag, period: period(d.year)})));
 const topTrendTags = countBy(trendTags, d => d.tag).sort((a, b) => b.count - a.count || a.key.localeCompare(b.key)).slice(0, 8).map(d => d.key);
@@ -171,27 +175,35 @@ const trendSeries = countBy(trendTags.filter(d => topTrendTags.includes(d.tag)),
   return {year: +year, tag, count: d.count};
 });
 display(Plot.plot({height: 420, x: {label: "Year", tickFormat: d => d}, y: {label: trendRubric === "articleType" ? "Articles" : "Articles carrying tag", grid: true}, color: {legend: true}, marks: [Plot.lineY(trendSeries, {x: "year", y: "count", z: "tag", stroke: "tag", curve: "step", tip: true}), Plot.dot(trendSeries, {x: "year", y: "count", fill: "tag", r: 3, tip: true})]}));
-return {trendRubric,trendField,trendTags,topTrendTags,trendSeries};
+return {trendField,trendTags,topTrendTags,trendSeries};
 }});
 
-define({id: "8f4d65cd", inputs: ["enriched","view","Inputs","rubrics","rubricTitles","period","splitTags","countBy"], outputs: ["issues","selectedIssue","specialIssueRubric","specialIssueField","issueArticles","issuePeriod","peerArticles","issueTagRows","peerTagRows","counts","iCounts","pCounts","issueComparison"], body: (enriched,view,Inputs,rubrics,rubricTitles,period,splitTags,countBy) => {
+define({id: "68ce813b", inputs: ["enriched","view","Inputs"], outputs: ["issues","selectedIssue"], body: (enriched,view,Inputs) => {
 const issues = Array.from(new Set(enriched.filter(d => d.special).map(d => d.issue))).sort();
 const selectedIssue = view(Inputs.select(issues, {label: "Special issue / collection", value: issues[0]}));
-const specialIssueRubric = view(Inputs.select(Object.keys(rubrics), {
+return {issues,selectedIssue};
+}});
+
+define({id: "26b5b46b", inputs: ["view","Inputs","trendRubrics","rubricTitles"], outputs: ["specialIssueRubric"], body: (view,Inputs,trendRubrics,rubricTitles) => {
+const specialIssueRubric = view(Inputs.select(Object.keys(trendRubrics), {
   label: "Comparison rubric",
-  format: name => rubricTitles[name],
+  format: name => name === "articleType" ? "Article type" : rubricTitles[name],
   value: "subjects"
 }));
-const specialIssueField = rubrics[specialIssueRubric];
+return {specialIssueRubric};
+}});
+
+define({id: "d7687acf", inputs: ["trendRubrics","specialIssueRubric","enriched","selectedIssue","period","valuesFor","countBy"], outputs: ["specialIssueField","issueArticles","issuePeriod","peerArticles","issueTagRows","peerTagRows","counts","iCounts","pCounts","issueComparison"], body: (trendRubrics,specialIssueRubric,enriched,selectedIssue,period,valuesFor,countBy) => {
+const specialIssueField = trendRubrics[specialIssueRubric];
 const issueArticles = enriched.filter(d => d.issue === selectedIssue);
 const issuePeriod = period(issueArticles[0]?.year);
 const peerArticles = enriched.filter(d => period(d.year) === issuePeriod && d.issue !== selectedIssue);
-const issueTagRows = issueArticles.flatMap(d => splitTags(d[specialIssueField]).map(tag => ({tag})));
-const peerTagRows = peerArticles.flatMap(d => splitTags(d[specialIssueField]).map(tag => ({tag})));
+const issueTagRows = issueArticles.flatMap(d => valuesFor(d, specialIssueField).map(tag => ({tag})));
+const peerTagRows = peerArticles.flatMap(d => valuesFor(d, specialIssueField).map(tag => ({tag})));
 const counts = (rows) => new Map(countBy(rows, d => d.tag).map(d => [d.key, d.count]));
 const iCounts = counts(issueTagRows), pCounts = counts(peerTagRows);
 const issueComparison = Array.from(new Set([...iCounts.keys(), ...pCounts.keys()]), tag => ({tag, issue: iCounts.get(tag) || 0, issueRate: (iCounts.get(tag) || 0) / issueArticles.length, periodRate: peerArticles.length ? (pCounts.get(tag) || 0) / peerArticles.length : 0})).sort((a,b) => (b.issueRate-b.periodRate) || b.issue-a.issue);
-return {issues,selectedIssue,specialIssueRubric,specialIssueField,issueArticles,issuePeriod,peerArticles,issueTagRows,peerTagRows,counts,iCounts,pCounts,issueComparison};
+return {specialIssueField,issueArticles,issuePeriod,peerArticles,issueTagRows,peerTagRows,counts,iCounts,pCounts,issueComparison};
 }});
 
 define({id: "43ea7495", inputs: ["display","html","issueArticles","issuePeriod","rubricTitles","specialIssueRubric","issueComparison"], body: (display,html,issueArticles,issuePeriod,rubricTitles,specialIssueRubric,issueComparison) => {
@@ -233,10 +245,13 @@ return {globalCounts,outliers};
 <h2 id="trends-through-time-and-language" tabindex="-1"><a class="observablehq-header-anchor" href="#trends-through-time-and-language">Trends through time and language</a></h2>
 <p>This view counts articles by year and tracks language as a transparent title/abstract-based classification. It is intended as a descriptive aid, especially where bilingual abstracts are present.</p>
 <div class="observablehq observablehq--block"><!--:2d0f5379:--></div>
-<div class="observablehq observablehq--block"><!--:265234c9:--></div>
+<div class="observablehq observablehq--block"><!--:4f36f4f9:--></div>
+<div class="observablehq observablehq--block"><!--:fdb5843c:--></div>
 <h2 id="special-issues-within-issue-and-period-comparison" tabindex="-1"><a class="observablehq-header-anchor" href="#special-issues-within-issue-and-period-comparison">Special issues: within-issue and period comparison</a></h2>
 <p>Special issues are first treated as independent clusters. The comparison table contrasts each special issue’s tag frequency with the tag frequency for its publication period across the whole corpus. A positive percentage-point difference signals a tag unusually concentrated in that issue; it does not establish a general editorial trend.</p>
-<div class="observablehq observablehq--block"><!--:8f4d65cd:--></div>
+<div class="observablehq observablehq--block"><!--:68ce813b:--></div>
+<div class="observablehq observablehq--block"><!--:26b5b46b:--></div>
+<div class="observablehq observablehq--block"><!--:d7687acf:--></div>
 <div class="observablehq observablehq--block"><!--:43ea7495:--></div>
 <h2 id="outliers-and-boundary-cases" tabindex="-1"><a class="observablehq-header-anchor" href="#outliers-and-boundary-cases">Outliers and boundary cases</a></h2>
 <p>Outliers are operationalised here as articles whose selected-rubric tag occurs only once in the corpus, plus records marked <em>unclear</em> or <em>context not specified</em>. These are not errors: they are the records most worth reading when testing the observed scope.</p>
@@ -244,7 +259,7 @@ return {globalCounts,outliers};
 <div class="note">The article links deliberately point to the DOI landing pages supplied by the corpus, so each charted claim can be checked against the published item.</div>
 </main>
 <footer id="observablehq-footer">
-<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-31T21:19:01">Oct 31, 2026</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-31T22:03:42">Oct 31, 2026</a>.</div>
 </footer>
 </div>
 </body>

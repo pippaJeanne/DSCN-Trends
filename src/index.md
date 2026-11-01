@@ -117,6 +117,9 @@ const trendRubric = view(Inputs.select(Object.keys(trendRubrics), {
   format: name => name === "articleType" ? "Article type" : rubricTitles[name],
   value: "subjects"
 }));
+```
+
+```js
 const trendField = trendRubrics[trendRubric];
 const trendTags = enriched.flatMap(d => valuesFor(d, trendField).map(tag => ({year: d.year, tag, period: period(d.year)})));
 const topTrendTags = countBy(trendTags, d => d.tag).sort((a, b) => b.count - a.count || a.key.localeCompare(b.key)).slice(0, 8).map(d => d.key);
@@ -134,17 +137,23 @@ Special issues are first treated as independent clusters. The comparison table c
 ```js
 const issues = Array.from(new Set(enriched.filter(d => d.special).map(d => d.issue))).sort();
 const selectedIssue = view(Inputs.select(issues, {label: "Special issue / collection", value: issues[0]}));
-const specialIssueRubric = view(Inputs.select(Object.keys(rubrics), {
+```
+
+```js
+const specialIssueRubric = view(Inputs.select(Object.keys(trendRubrics), {
   label: "Comparison rubric",
-  format: name => rubricTitles[name],
+  format: name => name === "articleType" ? "Article type" : rubricTitles[name],
   value: "subjects"
 }));
-const specialIssueField = rubrics[specialIssueRubric];
+```
+
+```js
+const specialIssueField = trendRubrics[specialIssueRubric];
 const issueArticles = enriched.filter(d => d.issue === selectedIssue);
 const issuePeriod = period(issueArticles[0]?.year);
 const peerArticles = enriched.filter(d => period(d.year) === issuePeriod && d.issue !== selectedIssue);
-const issueTagRows = issueArticles.flatMap(d => splitTags(d[specialIssueField]).map(tag => ({tag})));
-const peerTagRows = peerArticles.flatMap(d => splitTags(d[specialIssueField]).map(tag => ({tag})));
+const issueTagRows = issueArticles.flatMap(d => valuesFor(d, specialIssueField).map(tag => ({tag})));
+const peerTagRows = peerArticles.flatMap(d => valuesFor(d, specialIssueField).map(tag => ({tag})));
 const counts = (rows) => new Map(countBy(rows, d => d.tag).map(d => [d.key, d.count]));
 const iCounts = counts(issueTagRows), pCounts = counts(peerTagRows);
 const issueComparison = Array.from(new Set([...iCounts.keys(), ...pCounts.keys()]), tag => ({tag, issue: iCounts.get(tag) || 0, issueRate: (iCounts.get(tag) || 0) / issueArticles.length, periodRate: peerArticles.length ? (pCounts.get(tag) || 0) / peerArticles.length : 0})).sort((a,b) => (b.issueRate-b.periodRate) || b.issue-a.issue);
