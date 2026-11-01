@@ -166,7 +166,7 @@ const trendRubric = view(Inputs.select(Object.keys(trendRubrics), {
 return {trendRubric};
 }});
 
-define({id: "c742a40f", inputs: ["trendRubrics","trendRubric","enriched","valuesFor","period","countBy","display","Plot"], outputs: ["trendField","trendTags","topTrendTags","trendSeries"], body: (trendRubrics,trendRubric,enriched,valuesFor,period,countBy,display,Plot) => {
+define({id: "fdb5843c", inputs: ["trendRubrics","trendRubric","enriched","valuesFor","period","countBy","display","Plot"], outputs: ["trendField","trendTags","topTrendTags","trendSeries"], body: (trendRubrics,trendRubric,enriched,valuesFor,period,countBy,display,Plot) => {
 const trendField = trendRubrics[trendRubric];
 const trendTags = enriched.flatMap(d => valuesFor(d, trendField).map(tag => ({year: d.year, tag, period: period(d.year)})));
 const topTrendTags = countBy(trendTags, d => d.tag).sort((a, b) => b.count - a.count || a.key.localeCompare(b.key)).slice(0, 8).map(d => d.key);
@@ -174,7 +174,7 @@ const trendSeries = countBy(trendTags.filter(d => topTrendTags.includes(d.tag)),
   const [year, tag] = d.key.split("|");
   return {year: +year, tag, count: d.count};
 });
-display(Plot.plot({height: 420, x: {label: "Year", tickFormat: d => d}, y: {label: trendRubric === "articleType" ? "Articles" : "Articles carrying tag", grid: true}, color: {legend: true}, marks: [Plot.dot(trendSeries, {x: "year", y: "count", fill: "tag", stroke: "white", strokeWidth: 0.8, r: 5, tip: true})]}));
+display(Plot.plot({height: 420, x: {label: "Year", tickFormat: d => d}, y: {label: trendRubric === "articleType" ? "Articles" : "Articles carrying tag", grid: true}, color: {legend: true}, marks: [Plot.lineY(trendSeries, {x: "year", y: "count", z: "tag", stroke: "tag", curve: "step", tip: true}), Plot.dot(trendSeries, {x: "year", y: "count", fill: "tag", r: 3, tip: true})]}));
 return {trendField,trendTags,topTrendTags,trendSeries};
 }});
 
@@ -246,7 +246,7 @@ return {globalCounts,outliers};
 <p>This view counts articles by year and tracks language as a transparent title/abstract-based classification. It is intended as a descriptive aid, especially where bilingual abstracts are present.</p>
 <div class="observablehq observablehq--block"><!--:2d0f5379:--></div>
 <div class="observablehq observablehq--block"><!--:4f36f4f9:--></div>
-<div class="observablehq observablehq--block"><!--:c742a40f:--></div>
+<div class="observablehq observablehq--block"><!--:fdb5843c:--></div>
 <h2 id="special-issues-within-issue-and-period-comparison" tabindex="-1"><a class="observablehq-header-anchor" href="#special-issues-within-issue-and-period-comparison">Special issues: within-issue and period comparison</a></h2>
 <p>Special issues are first treated as independent clusters. The comparison table contrasts each special issue’s tag frequency with the tag frequency for its publication period across the whole corpus. A positive percentage-point difference signals a tag unusually concentrated in that issue; it does not establish a general editorial trend.</p>
 <div class="observablehq observablehq--block"><!--:68ce813b:--></div>
@@ -259,7 +259,7 @@ return {globalCounts,outliers};
 <div class="note">The article links deliberately point to the DOI landing pages supplied by the corpus, so each charted claim can be checked against the published item.</div>
 </main>
 <footer id="observablehq-footer">
-<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-10-31T23:39:56">Oct 31, 2026</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-11-01T00:11:40">Nov 1, 2026</a>.</div>
 </footer>
 </div>
 </body>

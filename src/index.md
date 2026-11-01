@@ -127,7 +127,7 @@ const trendSeries = countBy(trendTags.filter(d => topTrendTags.includes(d.tag)),
   const [year, tag] = d.key.split("|");
   return {year: +year, tag, count: d.count};
 });
-display(Plot.plot({height: 420, x: {label: "Year", tickFormat: d => d}, y: {label: trendRubric === "articleType" ? "Articles" : "Articles carrying tag", grid: true}, color: {legend: true}, marks: [Plot.dot(trendSeries, {x: "year", y: "count", fill: "tag", stroke: "white", strokeWidth: 0.8, r: 5, tip: true})]}));
+display(Plot.plot({height: 420, x: {label: "Year", tickFormat: d => d}, y: {label: trendRubric === "articleType" ? "Articles" : "Articles carrying tag", grid: true}, color: {legend: true}, marks: [Plot.lineY(trendSeries, {x: "year", y: "count", z: "tag", stroke: "tag", curve: "step", tip: true}), Plot.dot(trendSeries, {x: "year", y: "count", fill: "tag", r: 3, tip: true})]}));
 ```
 
 ## Special issues: within-issue and period comparison
