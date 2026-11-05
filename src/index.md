@@ -197,11 +197,14 @@ const outlierMode = view(Inputs.radio(Object.keys(outlierModes), {
 const outlierProjection = view(Inputs.radio(["umap", "pca"], {
   label: "Map", value: "umap", format: key => key.toUpperCase()
 }));
-const outlierSettings = outlierModes[outlierMode];
+// Inputs can briefly be undefined while Observable establishes reactive cells.
+const outlierModeKey = Object.hasOwn(outlierModes, outlierMode) ? outlierMode : "subjects";
+const outlierProjectionKey = ["umap", "pca"].includes(outlierProjection) ? outlierProjection : "umap";
+const outlierSettings = outlierModes[outlierModeKey];
 const outlierPoints = outlierAnalysis.map(d => ({
   ...d,
-  x: +d[`${outlierSettings.fieldPrefix}_${outlierProjection}_x`],
-  y: +d[`${outlierSettings.fieldPrefix}_${outlierProjection}_y`],
+  x: +d[`${outlierSettings.fieldPrefix}_${outlierProjectionKey}_x`],
+  y: +d[`${outlierSettings.fieldPrefix}_${outlierProjectionKey}_y`],
   cluster: `Cluster ${d[`${outlierSettings.fieldPrefix}_cluster`]}`
 }));
 const outlierClusters = Array.from(new Set(outlierPoints.map(d => d.cluster))).sort((a, b) => +a.slice(8) - +b.slice(8));
@@ -215,8 +218,8 @@ display(html`<div class="card"><strong>${outlierPoints.length} explicitly listed
 ```js
 display(Plot.plot({
   height: 520, marginLeft: 50, marginBottom: 45,
-  x: {label: `${outlierProjection.toUpperCase()} dimension 1`, grid: true},
-  y: {label: `${outlierProjection.toUpperCase()} dimension 2`, grid: true},
+  x: {label: `${outlierProjectionKey.toUpperCase()} dimension 1`, grid: true},
+  y: {label: `${outlierProjectionKey.toUpperCase()} dimension 2`, grid: true},
   color: {legend: true, label: "Cluster"},
   marks: [
     Plot.ruleX([0], {stroke: "#cbd5e1"}),

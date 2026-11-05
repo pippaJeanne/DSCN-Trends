@@ -227,7 +227,7 @@ display(html`<div class="card"><strong>${outliers.length} boundary/outlier artic
 return {globalCounts,outliers};
 }});
 
-define({id: "ef397217", inputs: ["view","Inputs","outlierAnalysis","outlierMetadata","display","html"], outputs: ["outlierModes","outlierMode","outlierProjection","outlierSettings","outlierPoints","outlierClusters","outlierClusterFilter","visibleOutlierPoints","outlierDimensionSettings","outlierPcaVariance"], body: (view,Inputs,outlierAnalysis,outlierMetadata,display,html) => {
+define({id: "7739c240", inputs: ["view","Inputs","outlierAnalysis","outlierMetadata","display","html"], outputs: ["outlierModes","outlierMode","outlierProjection","outlierModeKey","outlierProjectionKey","outlierSettings","outlierPoints","outlierClusters","outlierClusterFilter","visibleOutlierPoints","outlierDimensionSettings","outlierPcaVariance"], body: (view,Inputs,outlierAnalysis,outlierMetadata,display,html) => {
 const outlierModes = {
   subjects: {label: "Subjects / themes", fieldPrefix: "subject", neighbourRepresentation: "subjects", metadataKey: "subjects"},
   abstracts: {label: "Abstracts (TF-IDF)", fieldPrefix: "abstract", neighbourRepresentation: "abstract_tfidf", metadataKey: "abstract_tfidf"}
@@ -238,11 +238,14 @@ const outlierMode = view(Inputs.radio(Object.keys(outlierModes), {
 const outlierProjection = view(Inputs.radio(["umap", "pca"], {
   label: "Map", value: "umap", format: key => key.toUpperCase()
 }));
-const outlierSettings = outlierModes[outlierMode];
+// Inputs can briefly be undefined while Observable establishes reactive cells.
+const outlierModeKey = Object.hasOwn(outlierModes, outlierMode) ? outlierMode : "subjects";
+const outlierProjectionKey = ["umap", "pca"].includes(outlierProjection) ? outlierProjection : "umap";
+const outlierSettings = outlierModes[outlierModeKey];
 const outlierPoints = outlierAnalysis.map(d => ({
   ...d,
-  x: +d[`${outlierSettings.fieldPrefix}_${outlierProjection}_x`],
-  y: +d[`${outlierSettings.fieldPrefix}_${outlierProjection}_y`],
+  x: +d[`${outlierSettings.fieldPrefix}_${outlierProjectionKey}_x`],
+  y: +d[`${outlierSettings.fieldPrefix}_${outlierProjectionKey}_y`],
   cluster: `Cluster ${d[`${outlierSettings.fieldPrefix}_cluster`]}`
 }));
 const outlierClusters = Array.from(new Set(outlierPoints.map(d => d.cluster))).sort((a, b) => +a.slice(8) - +b.slice(8));
@@ -251,14 +254,14 @@ const visibleOutlierPoints = outlierClusterFilter === "All clusters" ? outlierPo
 const outlierDimensionSettings = outlierMetadata.dimensionality_reduction[outlierSettings.metadataKey];
 const outlierPcaVariance = outlierDimensionSettings.pca.explained_variance_ratio.reduce((total, value) => total + value, 0);
 display(html`<div class="card"><strong>${outlierPoints.length} explicitly listed outliers</strong><br><small>${outlierSettings.label}: ${outlierMetadata.representations[outlierSettings.metadataKey].feature_count} features · ${outlierMetadata.clustering[outlierSettings.metadataKey].selected_k} clusters selected by cosine silhouette score · PCA axes explain ${(outlierPcaVariance * 100).toFixed(1)}% together.</small></div>`);
-return {outlierModes,outlierMode,outlierProjection,outlierSettings,outlierPoints,outlierClusters,outlierClusterFilter,visibleOutlierPoints,outlierDimensionSettings,outlierPcaVariance};
+return {outlierModes,outlierMode,outlierProjection,outlierModeKey,outlierProjectionKey,outlierSettings,outlierPoints,outlierClusters,outlierClusterFilter,visibleOutlierPoints,outlierDimensionSettings,outlierPcaVariance};
 }});
 
-define({id: "5983c6c4", inputs: ["display","Plot","outlierProjection","visibleOutlierPoints"], body: (display,Plot,outlierProjection,visibleOutlierPoints) => {
+define({id: "e78f7869", inputs: ["display","Plot","outlierProjectionKey","visibleOutlierPoints"], body: (display,Plot,outlierProjectionKey,visibleOutlierPoints) => {
 display(Plot.plot({
   height: 520, marginLeft: 50, marginBottom: 45,
-  x: {label: `${outlierProjection.toUpperCase()} dimension 1`, grid: true},
-  y: {label: `${outlierProjection.toUpperCase()} dimension 2`, grid: true},
+  x: {label: `${outlierProjectionKey.toUpperCase()} dimension 1`, grid: true},
+  y: {label: `${outlierProjectionKey.toUpperCase()} dimension 2`, grid: true},
   color: {legend: true, label: "Cluster"},
   marks: [
     Plot.ruleX([0], {stroke: "#cbd5e1"}),
@@ -339,8 +342,8 @@ return {outlierArticleTitle,selectedOutlierArticle,selectedOutlierNeighbours};
 <div class="note">The article links deliberately point to the DOI landing pages supplied by the corpus, so each charted claim can be checked against the published item.</div>
 <h2 id="outlier-similarity-analysis" tabindex="-1"><a class="observablehq-header-anchor" href="#outlier-similarity-analysis">Outlier similarity analysis</a></h2>
 <p>This analysis is limited to the 26 recent boundary/outlier articles identified in the review list. It asks whether they nevertheless form local patterns: the subject view uses the complete controlled <code>subject_tags</code> assigned to each article, while the abstract view uses bilingual word-and-bigram TF-IDF. PCA and UMAP are alternative two-dimensional views of the same underlying representation; clusters and nearest neighbours are calculated from the original feature space, not from the displayed coordinates.</p>
-<div class="observablehq observablehq--block"><!--:ef397217:--></div>
-<div class="observablehq observablehq--block"><!--:5983c6c4:--></div>
+<div class="observablehq observablehq--block"><!--:7739c240:--></div>
+<div class="observablehq observablehq--block"><!--:e78f7869:--></div>
 <div class="observablehq observablehq--block"><!--:ff4c571b:--></div>
 <h2 id="inspect-cosine-neighbours" tabindex="-1"><a class="observablehq-header-anchor" href="#inspect-cosine-neighbours">Inspect cosine neighbours</a></h2>
 <p>Select an article to see its closest other outliers in the current representation. The score is cosine similarity (1 = identical feature direction; 0 = no overlap). Read the linked articles before treating a proximity as a substantive relationship.</p>
@@ -348,7 +351,7 @@ return {outlierArticleTitle,selectedOutlierArticle,selectedOutlierNeighbours};
 <div class="note">Reproducibility: the exported source hashes, feature construction, PCA and UMAP settings, clustering candidates and silhouette scores, package versions, and execution settings are retained in <code>data/outlier-analysis/analysis_metadata.json</code>.</div>
 </main>
 <footer id="observablehq-footer">
-<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-11-05T03:50:39">Nov 5, 2026</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-11-05T03:59:24">Nov 5, 2026</a>.</div>
 </footer>
 </div>
 </body>
