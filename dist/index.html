@@ -62,10 +62,16 @@ import {define} from "./_observablehq/client.ae6b380c.js";
 import {registerFile} from "./_observablehq/stdlib.c4209144.js";
 
 registerFile("./data/articles.csv", {"name":"./data/articles.csv","mimeType":"text/csv","path":"./_file/data/articles.7d3edc9e.csv","lastModified":1793343951351,"size":882775});
+registerFile("./data/outlier-analysis/analysis_metadata.json", {"name":"./data/outlier-analysis/analysis_metadata.json","mimeType":"application/json","path":"./_file/data/outlier-analysis/analysis_metadata.57fbf832.json","lastModified":1793863923403,"size":5671});
+registerFile("./data/outlier-analysis/outlier_articles_analysis.csv", {"name":"./data/outlier-analysis/outlier_articles_analysis.csv","mimeType":"text/csv","path":"./_file/data/outlier-analysis/outlier_articles_analysis.739ab992.csv","lastModified":1793863923089,"size":105032});
+registerFile("./data/outlier-analysis/outlier_nearest_neighbours.csv", {"name":"./data/outlier-analysis/outlier_nearest_neighbours.csv","mimeType":"text/csv","path":"./_file/data/outlier-analysis/outlier_nearest_neighbours.377fabfb.csv","lastModified":1793863923305,"size":61106});
 
-define({id: "aa28b94d", inputs: ["FileAttachment"], outputs: ["Plot","Inputs","html","articles","rubrics","trendRubrics","splitTags","valuesFor","countBy","languageOf","enriched","period"], body: async (FileAttachment) => {
+define({id: "d3ac252a", inputs: ["FileAttachment"], outputs: ["Plot","Inputs","html","articles","outlierAnalysis","outlierNeighbours","outlierMetadata","rubrics","trendRubrics","splitTags","valuesFor","countBy","languageOf","enriched","period"], body: async (FileAttachment) => {
 const [Plot, Inputs, {html}] = await Promise.all([import("./_npm/@observablehq/plot@0.6.17/93ce672e.js"), import("./_observablehq/stdlib/inputs.0cc910eb.js"), import("./_npm/htl@1.0.0/11521f02.js")]);
 const articles = await FileAttachment("./data/articles.csv").csv({typed: true});
+const outlierAnalysis = await FileAttachment("./data/outlier-analysis/outlier_articles_analysis.csv").csv({typed: true});
+const outlierNeighbours = await FileAttachment("./data/outlier-analysis/outlier_nearest_neighbours.csv").csv({typed: true});
+const outlierMetadata = await FileAttachment("./data/outlier-analysis/analysis_metadata.json").json();
 const rubrics = {
   subjects: "subject_tags",
   methodology: "method_tags",
@@ -82,7 +88,7 @@ const countBy = (values, key) => Array.from(values.reduce((counts, value) => {
 const languageOf = (d) => /[àâçéèêëîïôûùüÿœ]|\b(le|la|les|des|une|dans|pour|avec|sur|et)\b/i.test(`${d.title}`) ? "French" : "English";
 const enriched = articles.map(d => ({...d, year: +d.year, language: languageOf(d), special: d.special_issue === "Yes"}));
 const period = (year) => year <= 2005 ? "1996–2005" : year <= 2015 ? "2006–2015" : year <= 2020 ? "2016–2020" : "2021–2026";
-return {Plot,Inputs,html,articles,rubrics,trendRubrics,splitTags,valuesFor,countBy,languageOf,enriched,period};
+return {Plot,Inputs,html,articles,outlierAnalysis,outlierNeighbours,outlierMetadata,rubrics,trendRubrics,splitTags,valuesFor,countBy,languageOf,enriched,period};
 }});
 
 define({id: "81ba17e0", inputs: ["enriched","rubrics","splitTags","display","html"], outputs: ["overview"], body: (enriched,rubrics,splitTags,display,html) => {
@@ -221,6 +227,80 @@ display(html`<div class="card"><strong>${outliers.length} boundary/outlier artic
 return {globalCounts,outliers};
 }});
 
+define({id: "ef397217", inputs: ["view","Inputs","outlierAnalysis","outlierMetadata","display","html"], outputs: ["outlierModes","outlierMode","outlierProjection","outlierSettings","outlierPoints","outlierClusters","outlierClusterFilter","visibleOutlierPoints","outlierDimensionSettings","outlierPcaVariance"], body: (view,Inputs,outlierAnalysis,outlierMetadata,display,html) => {
+const outlierModes = {
+  subjects: {label: "Subjects / themes", fieldPrefix: "subject", neighbourRepresentation: "subjects", metadataKey: "subjects"},
+  abstracts: {label: "Abstracts (TF-IDF)", fieldPrefix: "abstract", neighbourRepresentation: "abstract_tfidf", metadataKey: "abstract_tfidf"}
+};
+const outlierMode = view(Inputs.radio(Object.keys(outlierModes), {
+  label: "Similarity evidence", value: "subjects", format: key => outlierModes[key].label
+}));
+const outlierProjection = view(Inputs.radio(["umap", "pca"], {
+  label: "Map", value: "umap", format: key => key.toUpperCase()
+}));
+const outlierSettings = outlierModes[outlierMode];
+const outlierPoints = outlierAnalysis.map(d => ({
+  ...d,
+  x: +d[`${outlierSettings.fieldPrefix}_${outlierProjection}_x`],
+  y: +d[`${outlierSettings.fieldPrefix}_${outlierProjection}_y`],
+  cluster: `Cluster ${d[`${outlierSettings.fieldPrefix}_cluster`]}`
+}));
+const outlierClusters = Array.from(new Set(outlierPoints.map(d => d.cluster))).sort((a, b) => +a.slice(8) - +b.slice(8));
+const outlierClusterFilter = view(Inputs.select(["All clusters", ...outlierClusters], {label: "Show cluster", value: "All clusters"}));
+const visibleOutlierPoints = outlierClusterFilter === "All clusters" ? outlierPoints : outlierPoints.filter(d => d.cluster === outlierClusterFilter);
+const outlierDimensionSettings = outlierMetadata.dimensionality_reduction[outlierSettings.metadataKey];
+const outlierPcaVariance = outlierDimensionSettings.pca.explained_variance_ratio.reduce((total, value) => total + value, 0);
+display(html`<div class="card"><strong>${outlierPoints.length} explicitly listed outliers</strong><br><small>${outlierSettings.label}: ${outlierMetadata.representations[outlierSettings.metadataKey].feature_count} features · ${outlierMetadata.clustering[outlierSettings.metadataKey].selected_k} clusters selected by cosine silhouette score · PCA axes explain ${(outlierPcaVariance * 100).toFixed(1)}% together.</small></div>`);
+return {outlierModes,outlierMode,outlierProjection,outlierSettings,outlierPoints,outlierClusters,outlierClusterFilter,visibleOutlierPoints,outlierDimensionSettings,outlierPcaVariance};
+}});
+
+define({id: "5983c6c4", inputs: ["display","Plot","outlierProjection","visibleOutlierPoints"], body: (display,Plot,outlierProjection,visibleOutlierPoints) => {
+display(Plot.plot({
+  height: 520, marginLeft: 50, marginBottom: 45,
+  x: {label: `${outlierProjection.toUpperCase()} dimension 1`, grid: true},
+  y: {label: `${outlierProjection.toUpperCase()} dimension 2`, grid: true},
+  color: {legend: true, label: "Cluster"},
+  marks: [
+    Plot.ruleX([0], {stroke: "#cbd5e1"}),
+    Plot.ruleY([0], {stroke: "#cbd5e1"}),
+    Plot.dot(visibleOutlierPoints, {
+      x: "x", y: "y", fill: "cluster", r: 7, stroke: "white", strokeWidth: 1.5, tip: true,
+      title: d => `${d.title}\n${d.year} · ${d.cluster}\nReview tags: ${d.review_tags}`
+    })
+  ]
+}));
+}});
+
+define({id: "ff4c571b", inputs: ["countBy","outlierPoints","display","Plot"], outputs: ["outlierClusterCounts"], body: (countBy,outlierPoints,display,Plot) => {
+const outlierClusterCounts = countBy(outlierPoints, d => d.cluster)
+  .map(d => ({cluster: d.key, articles: d.count}))
+  .sort((a, b) => +a.cluster.slice(8) - +b.cluster.slice(8));
+display(Plot.plot({
+  height: 250, marginLeft: 100,
+  x: {label: "Outlier articles", grid: true}, y: {label: null}, color: {legend: false},
+  marks: [
+    Plot.barX(outlierClusterCounts, {x: "articles", y: "cluster", fill: "cluster", tip: true}),
+    Plot.text(outlierClusterCounts, {x: "articles", y: "cluster", text: "articles", dx: 8, textAnchor: "start"})
+  ]
+}));
+return {outlierClusterCounts};
+}});
+
+define({id: "9f5d998e", inputs: ["view","Inputs","outlierPoints","outlierNeighbours","outlierSettings","display","html"], outputs: ["outlierArticleTitle","selectedOutlierArticle","selectedOutlierNeighbours"], body: (view,Inputs,outlierPoints,outlierNeighbours,outlierSettings,display,html) => {
+const outlierArticleTitle = view(Inputs.select(outlierPoints.map(d => d.title).sort(), {
+  label: "Outlier article", value: outlierPoints[0]?.title
+}));
+const selectedOutlierArticle = outlierPoints.find(d => d.title === outlierArticleTitle);
+const selectedOutlierNeighbours = outlierNeighbours
+  .filter(d => String(d.article_id) === String(selectedOutlierArticle?.id) && d.representation === outlierSettings.neighbourRepresentation)
+  .sort((a, b) => a.rank - b.rank);
+display(html`<div class="card"><strong>${selectedOutlierArticle ? selectedOutlierArticle.title : "No article selected"}</strong><br><small>Review-trigger tags: ${selectedOutlierArticle?.review_tags || "—"}</small><table><thead><tr><th>Rank</th><th>Nearest outlier</th><th>Year</th><th>Cosine similarity</th></tr></thead><tbody>${selectedOutlierNeighbours.map(d => {
+  const neighbour = outlierPoints.find(article => String(article.id) === String(d.neighbour_id));
+  return html`<tr><td>${d.rank}</td><td>${neighbour?.url ? html`<a href=${neighbour.url} target="_blank" rel="noopener">${d.neighbour_title}</a>` : d.neighbour_title}</td><td>${d.neighbour_year}</td><td>${(+d.cosine_similarity).toFixed(3)}</td></tr>`;
+})}</tbody></table></div>`);
+return {outlierArticleTitle,selectedOutlierArticle,selectedOutlierNeighbours};
+}});
+
 </script>
 </head>
 <body>
@@ -229,7 +309,7 @@ return {globalCounts,outliers};
 <h1 id="dscn-scope-atlas" tabindex="-1"><a class="observablehq-header-anchor" href="#dscn-scope-atlas">DSCN Scope Atlas</a></h1>
 <p class="lede">An article-level map of <em>Digital Studies / Le champ numérique</em>: what it studies, how it works, what it works on, what it contributes, and where its evidence is situated.</p>
 <div class="note"><strong>How to read this atlas.</strong> Articles may carry more than one tag in a rubric, so tag totals are not mutually exclusive. Every bar can be checked against its linked article list. “Unclear” and “context not specified” remain visible rather than being treated as substantive findings.</div>
-<div class="observablehq observablehq--block"><!--:aa28b94d:--></div>
+<div class="observablehq observablehq--block"><!--:d3ac252a:--></div>
 <h2 id="corpus-at-a-glance" tabindex="-1"><a class="observablehq-header-anchor" href="#corpus-at-a-glance">Corpus at a glance</a></h2>
 <div class="observablehq observablehq--block"><!--:81ba17e0:--></div>
 <h2 id="five-rubric-overview-clusters-over-time" tabindex="-1"><a class="observablehq-header-anchor" href="#five-rubric-overview-clusters-over-time">Five-rubric overview: clusters over time</a></h2>
@@ -257,9 +337,18 @@ return {globalCounts,outliers};
 <p>Outliers are operationalised here as articles whose selected-rubric tag occurs only once in the corpus, plus records marked <em>unclear</em> or <em>context not specified</em>. These are not errors: they are the records most worth reading when testing the observed scope.</p>
 <div class="observablehq observablehq--block"><!--:c8b19388:--></div>
 <div class="note">The article links deliberately point to the DOI landing pages supplied by the corpus, so each charted claim can be checked against the published item.</div>
+<h2 id="outlier-similarity-analysis" tabindex="-1"><a class="observablehq-header-anchor" href="#outlier-similarity-analysis">Outlier similarity analysis</a></h2>
+<p>This analysis is limited to the 26 recent boundary/outlier articles identified in the review list. It asks whether they nevertheless form local patterns: the subject view uses the complete controlled <code>subject_tags</code> assigned to each article, while the abstract view uses bilingual word-and-bigram TF-IDF. PCA and UMAP are alternative two-dimensional views of the same underlying representation; clusters and nearest neighbours are calculated from the original feature space, not from the displayed coordinates.</p>
+<div class="observablehq observablehq--block"><!--:ef397217:--></div>
+<div class="observablehq observablehq--block"><!--:5983c6c4:--></div>
+<div class="observablehq observablehq--block"><!--:ff4c571b:--></div>
+<h2 id="inspect-cosine-neighbours" tabindex="-1"><a class="observablehq-header-anchor" href="#inspect-cosine-neighbours">Inspect cosine neighbours</a></h2>
+<p>Select an article to see its closest other outliers in the current representation. The score is cosine similarity (1 = identical feature direction; 0 = no overlap). Read the linked articles before treating a proximity as a substantive relationship.</p>
+<div class="observablehq observablehq--block"><!--:9f5d998e:--></div>
+<div class="note">Reproducibility: the exported source hashes, feature construction, PCA and UMAP settings, clustering candidates and silhouette scores, package versions, and execution settings are retained in <code>data/outlier-analysis/analysis_metadata.json</code>.</div>
 </main>
 <footer id="observablehq-footer">
-<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-11-01T00:11:40">Nov 1, 2026</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-11-05T03:50:39">Nov 5, 2026</a>.</div>
 </footer>
 </div>
 </body>

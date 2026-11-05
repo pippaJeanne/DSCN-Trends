@@ -1,0 +1,204 @@
+{
+  "created_utc": "2026-11-05T07:32:03.321966+00:00",
+  "purpose": "Cosine similarity, PCA, UMAP, and clustering of the explicitly listed DSCN article outliers.",
+  "input": {
+    "outlier_list": "DSCN/article_outliers.md",
+    "outlier_list_sha256": "69698718a213e1142ccdddd80c4bb64b6dcda27718047cb7dd8fd036293bf3e6",
+    "outlier_csv": "DSCN/article_outliers.csv",
+    "outlier_csv_sha256": "10c0cf0f5ac51bae17e2a8c71849a92b40040f0a0f2edb4bc65b81535ce7738e",
+    "reference_articles_csv": "DSCN/dscn-analysis/src/data/articles.csv",
+    "reference_articles_sha256": "7d3edc9e36a862a959f85bac3034b7b13c980af1b8efc77fe0c9658c4c51bc9b",
+    "conversion": {
+      "outlier_rows": 26,
+      "matched_rows": 26,
+      "unmatched": [],
+      "ambiguous": [],
+      "source_fields": [
+        "id",
+        "title",
+        "published",
+        "doi",
+        "authors",
+        "access_url",
+        "abstract",
+        "keywords",
+        "peer_reviewer_N",
+        "issue",
+        "article_type",
+        "year",
+        "publication_date",
+        "special_issue",
+        "url",
+        "subject_tags",
+        "method_tags",
+        "material_tags",
+        "contribution_tags",
+        "context_tags",
+        "notes",
+        "review_tags",
+        "source_match"
+      ]
+    }
+  },
+  "records_analysed": 26,
+  "dependencies": {
+    "numpy": "2.2.6",
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1",
+    "umap-learn": "0.5.12"
+  },
+  "execution_environment": {
+    "python_version": "3.11.4 (main, Jul 25 2023, 17:08:53) [Clang 13.0.0 (clang-1300.0.29.30)]",
+    "platform": "macOS-26.6.2-x86_64-i386-64bit",
+    "numba_disable_jit": "1",
+    "note": "NUMBA_DISABLE_JIT affects execution speed only; it does not change the UMAP parameters or the analysis inputs."
+  },
+  "representations": {
+    "subjects": {
+      "source_column": "subject_tags",
+      "split_delimiter": ";",
+      "tag_normalisation": "Unicode NFC; trim; collapse whitespace; lowercase/casefold",
+      "vectorisation": "binary multi-label indicator matrix",
+      "feature_count": 77
+    },
+    "abstract_tfidf": {
+      "source_column": "abstract",
+      "lowercase": true,
+      "strip_accents": "unicode",
+      "stop_words": null,
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 1,
+      "max_df": 1.0,
+      "max_features": 1500,
+      "sublinear_tf": true,
+      "feature_count": 1500,
+      "note": "No stop-word list is applied because abstracts may be English, French, or bilingual."
+    }
+  },
+  "similarity": {
+    "metric": "cosine",
+    "nearest_neighbours_per_article": 5,
+    "tie_break": "neighbour title alphabetically"
+  },
+  "clustering": {
+    "algorithm": "AgglomerativeClustering",
+    "linkage": "average",
+    "metric": "cosine",
+    "candidate_k": "2 through min(8, n_records - 1)",
+    "selection": "maximum mean cosine silhouette score",
+    "subjects": {
+      "selected_k": 4,
+      "candidate_scores": [
+        {
+          "k": 2,
+          "silhouette_cosine": 0.05042941459993856
+        },
+        {
+          "k": 3,
+          "silhouette_cosine": 0.050631285323431446
+        },
+        {
+          "k": 4,
+          "silhouette_cosine": 0.07061648694922618
+        },
+        {
+          "k": 5,
+          "silhouette_cosine": 0.07061648694922618
+        },
+        {
+          "k": 6,
+          "silhouette_cosine": 0.07061648694922618
+        },
+        {
+          "k": 7,
+          "silhouette_cosine": 0.07061648694922618
+        },
+        {
+          "k": 8,
+          "silhouette_cosine": 0.07061648694922618
+        }
+      ],
+      "selection": "maximum cosine silhouette score; ties keep the smaller k"
+    },
+    "abstract_tfidf": {
+      "selected_k": 2,
+      "candidate_scores": [
+        {
+          "k": 2,
+          "silhouette_cosine": 0.032653349391808015
+        },
+        {
+          "k": 3,
+          "silhouette_cosine": 0.023840514681940136
+        },
+        {
+          "k": 4,
+          "silhouette_cosine": 0.020023577590817097
+        },
+        {
+          "k": 5,
+          "silhouette_cosine": 0.017743698128016613
+        },
+        {
+          "k": 6,
+          "silhouette_cosine": 0.018068182686419812
+        },
+        {
+          "k": 7,
+          "silhouette_cosine": 0.019764462581599123
+        },
+        {
+          "k": 8,
+          "silhouette_cosine": 0.01395741788875633
+        }
+      ],
+      "selection": "maximum cosine silhouette score; ties keep the smaller k"
+    }
+  },
+  "dimensionality_reduction": {
+    "subjects": {
+      "pca": {
+        "n_components": 2,
+        "svd_solver": "full",
+        "explained_variance_ratio": [
+          0.08281819532579339,
+          0.06966928343165626
+        ]
+      },
+      "umap": {
+        "n_components": 2,
+        "n_neighbors": 10,
+        "min_dist": 0.1,
+        "metric": "cosine",
+        "random_state": 42
+      }
+    },
+    "abstract_tfidf": {
+      "pca": {
+        "n_components": 2,
+        "svd_solver": "full",
+        "explained_variance_ratio": [
+          0.05193400288559481,
+          0.048791977628610955
+        ]
+      },
+      "umap": {
+        "n_components": 2,
+        "n_neighbors": 10,
+        "min_dist": 0.1,
+        "metric": "cosine",
+        "random_state": 42
+      }
+    }
+  },
+  "exports": {
+    "articles": "outlier_articles_analysis.csv",
+    "nearest_neighbours": "outlier_nearest_neighbours.csv",
+    "subject_features": "subject_features.csv",
+    "abstract_tfidf_features": "abstract_tfidf_features.csv"
+  },
+  "interpretation_note": "PCA and UMAP coordinates are visual summaries, not the basis for clustering. Clusters and nearest neighbours use the original representation spaces."
+}
