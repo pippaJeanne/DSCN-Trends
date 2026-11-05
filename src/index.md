@@ -187,39 +187,37 @@ display(html`<div class="card"><strong>${outliers.length} boundary/outlier artic
 This analysis is limited to the 26 recent boundary/outlier articles identified in the review list. It asks whether they nevertheless form local patterns: the subject view uses the complete controlled <code>subject_tags</code> assigned to each article, while the abstract view uses bilingual word-and-bigram TF-IDF. PCA and UMAP are alternative two-dimensional views of the same underlying representation; clusters and nearest neighbours are calculated from the original feature space, not from the displayed coordinates.
 
 ```js
-const outlierModes = {
-  subjects: {label: "Subjects / themes", fieldPrefix: "subject", neighbourRepresentation: "subjects", metadataKey: "subjects"},
-  abstracts: {label: "Abstracts (TF-IDF)", fieldPrefix: "abstract", neighbourRepresentation: "abstract_tfidf", metadataKey: "abstract_tfidf"}
-};
-const outlierMode = view(Inputs.radio(Object.keys(outlierModes), {
-  label: "Similarity evidence", value: "subjects", format: key => outlierModes[key].label
-}));
-const outlierProjection = view(Inputs.radio(["umap", "pca"], {
-  label: "Map", value: "umap", format: key => key.toUpperCase()
-}));
-// Inputs can briefly be undefined while Observable establishes reactive cells.
-const outlierModeKey = Object.hasOwn(outlierModes, outlierMode) ? outlierMode : "subjects";
-const outlierProjectionKey = ["umap", "pca"].includes(outlierProjection) ? outlierProjection : "umap";
-const outlierSettings = outlierModes[outlierModeKey];
+const outlierMode = view(Inputs.select(new Map([
+  ["Subjects / themes", "subject"],
+  ["Abstracts (TF-IDF)", "abstract"]
+]), {label: "Similarity evidence", value: "subject"}));
+const outlierProjection = view(Inputs.select(new Map([
+  ["UMAP", "umap"],
+  ["PCA", "pca"]
+]), {label: "Map", value: "umap"}));
+// Explicit primitive values ensure a changed control always selects a new data field.
+const outlierFieldPrefix = outlierMode === "abstract" ? "abstract" : "subject";
+const outlierMetadataKey = outlierMode === "abstract" ? "abstract_tfidf" : "subjects";
+const outlierNeighbourRepresentation = outlierMode === "abstract" ? "abstract_tfidf" : "subjects";
 const outlierPoints = outlierAnalysis.map(d => ({
   ...d,
-  x: +d[`${outlierSettings.fieldPrefix}_${outlierProjectionKey}_x`],
-  y: +d[`${outlierSettings.fieldPrefix}_${outlierProjectionKey}_y`],
-  cluster: `Cluster ${d[`${outlierSettings.fieldPrefix}_cluster`]}`
+  x: +d[`${outlierFieldPrefix}_${outlierProjection}_x`],
+  y: +d[`${outlierFieldPrefix}_${outlierProjection}_y`],
+  cluster: `Cluster ${d[`${outlierFieldPrefix}_cluster`]}`
 }));
 const outlierClusters = Array.from(new Set(outlierPoints.map(d => d.cluster))).sort((a, b) => +a.slice(8) - +b.slice(8));
 const outlierClusterFilter = view(Inputs.select(["All clusters", ...outlierClusters], {label: "Show cluster", value: "All clusters"}));
 const visibleOutlierPoints = outlierClusterFilter === "All clusters" ? outlierPoints : outlierPoints.filter(d => d.cluster === outlierClusterFilter);
-const outlierDimensionSettings = outlierMetadata.dimensionality_reduction[outlierSettings.metadataKey];
+const outlierDimensionSettings = outlierMetadata.dimensionality_reduction[outlierMetadataKey];
 const outlierPcaVariance = outlierDimensionSettings.pca.explained_variance_ratio.reduce((total, value) => total + value, 0);
-display(html`<div class="card"><strong>${outlierPoints.length} explicitly listed outliers</strong><br><small>${outlierSettings.label}: ${outlierMetadata.representations[outlierSettings.metadataKey].feature_count} features · ${outlierMetadata.clustering[outlierSettings.metadataKey].selected_k} clusters selected by cosine silhouette score · PCA axes explain ${(outlierPcaVariance * 100).toFixed(1)}% together.</small></div>`);
+display(html`<div class="card"><strong>${outlierPoints.length} explicitly listed outliers</strong><br><small>${outlierMode === "abstract" ? "Abstracts (TF-IDF)" : "Subjects / themes"}: ${outlierMetadata.representations[outlierMetadataKey].feature_count} features · ${outlierMetadata.clustering[outlierMetadataKey].selected_k} clusters selected by cosine silhouette score · PCA axes explain ${(outlierPcaVariance * 100).toFixed(1)}% together.</small></div>`);
 ```
 
 ```js
 display(Plot.plot({
   height: 520, marginLeft: 50, marginBottom: 45,
-  x: {label: `${outlierProjectionKey.toUpperCase()} dimension 1`, grid: true},
-  y: {label: `${outlierProjectionKey.toUpperCase()} dimension 2`, grid: true},
+  x: {label: `${outlierProjection.toUpperCase()} dimension 1`, grid: true},
+  y: {label: `${outlierProjection.toUpperCase()} dimension 2`, grid: true},
   color: {legend: true, label: "Cluster"},
   marks: [
     Plot.ruleX([0], {stroke: "#cbd5e1"}),
@@ -246,6 +244,11 @@ display(Plot.plot({
 }));
 ```
 
+```js
+const visibleOutlierArticles = visibleOutlierPoints.sort((a, b) => +b.year - +a.year || a.title.localeCompare(b.title));
+display(html`<div class="card"><strong>${outlierClusterFilter === "All clusters" ? "Articles shown in all clusters" : `Articles in ${outlierClusterFilter}`}</strong><table><thead><tr><th>Cluster</th><th>Year</th><th>Article</th><th>Review-trigger tags</th></tr></thead><tbody>${visibleOutlierArticles.map(d => html`<tr><td>${d.cluster}</td><td>${d.year}</td><td><a href=${d.url} target="_blank" rel="noopener">${d.title}</a></td><td>${d.review_tags}</td></tr>`)}</tbody></table></div>`);
+```
+
 ## Inspect cosine neighbours
 
 Select an article to see its closest other outliers in the current representation. The score is cosine similarity (1 = identical feature direction; 0 = no overlap). Read the linked articles before treating a proximity as a substantive relationship.
@@ -256,7 +259,7 @@ const outlierArticleTitle = view(Inputs.select(outlierPoints.map(d => d.title).s
 }));
 const selectedOutlierArticle = outlierPoints.find(d => d.title === outlierArticleTitle);
 const selectedOutlierNeighbours = outlierNeighbours
-  .filter(d => String(d.article_id) === String(selectedOutlierArticle?.id) && d.representation === outlierSettings.neighbourRepresentation)
+  .filter(d => String(d.article_id) === String(selectedOutlierArticle?.id) && d.representation === outlierNeighbourRepresentation)
   .sort((a, b) => a.rank - b.rank);
 display(html`<div class="card"><strong>${selectedOutlierArticle ? selectedOutlierArticle.title : "No article selected"}</strong><br><small>Review-trigger tags: ${selectedOutlierArticle?.review_tags || "—"}</small><table><thead><tr><th>Rank</th><th>Nearest outlier</th><th>Year</th><th>Cosine similarity</th></tr></thead><tbody>${selectedOutlierNeighbours.map(d => {
   const neighbour = outlierPoints.find(article => String(article.id) === String(d.neighbour_id));
