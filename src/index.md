@@ -191,10 +191,16 @@ const outlierMode = view(Inputs.select(new Map([
   ["Subjects / themes", "subject"],
   ["Abstracts (TF-IDF)", "abstract"]
 ]), {label: "Similarity evidence", value: "subject"}));
+```
+
+```js
 const outlierProjection = view(Inputs.select(new Map([
   ["UMAP", "umap"],
   ["PCA", "pca"]
 ]), {label: "Map", value: "umap"}));
+```
+
+```js
 // Explicit primitive values ensure a changed control always selects a new data field.
 const outlierFieldPrefix = outlierMode === "abstract" ? "abstract" : "subject";
 const outlierMetadataKey = outlierMode === "abstract" ? "abstract_tfidf" : "subjects";
@@ -206,7 +212,13 @@ const outlierPoints = outlierAnalysis.map(d => ({
   cluster: `Cluster ${d[`${outlierFieldPrefix}_cluster`]}`
 }));
 const outlierClusters = Array.from(new Set(outlierPoints.map(d => d.cluster))).sort((a, b) => +a.slice(8) - +b.slice(8));
+```
+
+```js
 const outlierClusterFilter = view(Inputs.select(["All clusters", ...outlierClusters], {label: "Show cluster", value: "All clusters"}));
+```
+
+```js
 const visibleOutlierPoints = outlierClusterFilter === "All clusters" ? outlierPoints : outlierPoints.filter(d => d.cluster === outlierClusterFilter);
 const outlierDimensionSettings = outlierMetadata.dimensionality_reduction[outlierMetadataKey];
 const outlierPcaVariance = outlierDimensionSettings.pca.explained_variance_ratio.reduce((total, value) => total + value, 0);
@@ -257,6 +269,9 @@ Select an article to see its closest other outliers in the current representatio
 const outlierArticleTitle = view(Inputs.select(outlierPoints.map(d => d.title).sort(), {
   label: "Outlier article", value: outlierPoints[0]?.title
 }));
+```
+
+```js
 const selectedOutlierArticle = outlierPoints.find(d => d.title === outlierArticleTitle);
 const selectedOutlierNeighbours = outlierNeighbours
   .filter(d => String(d.article_id) === String(selectedOutlierArticle?.id) && d.representation === outlierNeighbourRepresentation)

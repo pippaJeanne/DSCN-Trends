@@ -227,15 +227,23 @@ display(html`<div class="card"><strong>${outliers.length} boundary/outlier artic
 return {globalCounts,outliers};
 }});
 
-define({id: "de3b86b9", inputs: ["view","Inputs","outlierAnalysis","outlierMetadata","display","html"], outputs: ["outlierMode","outlierProjection","outlierFieldPrefix","outlierMetadataKey","outlierNeighbourRepresentation","outlierPoints","outlierClusters","outlierClusterFilter","visibleOutlierPoints","outlierDimensionSettings","outlierPcaVariance"], body: (view,Inputs,outlierAnalysis,outlierMetadata,display,html) => {
+define({id: "c2e2b146", inputs: ["view","Inputs"], outputs: ["outlierMode"], body: (view,Inputs) => {
 const outlierMode = view(Inputs.select(new Map([
   ["Subjects / themes", "subject"],
   ["Abstracts (TF-IDF)", "abstract"]
 ]), {label: "Similarity evidence", value: "subject"}));
+return {outlierMode};
+}});
+
+define({id: "69cf5ee8", inputs: ["view","Inputs"], outputs: ["outlierProjection"], body: (view,Inputs) => {
 const outlierProjection = view(Inputs.select(new Map([
   ["UMAP", "umap"],
   ["PCA", "pca"]
 ]), {label: "Map", value: "umap"}));
+return {outlierProjection};
+}});
+
+define({id: "fc3d4fb1", inputs: ["outlierMode","outlierAnalysis","outlierProjection"], outputs: ["outlierFieldPrefix","outlierMetadataKey","outlierNeighbourRepresentation","outlierPoints","outlierClusters"], body: (outlierMode,outlierAnalysis,outlierProjection) => {
 // Explicit primitive values ensure a changed control always selects a new data field.
 const outlierFieldPrefix = outlierMode === "abstract" ? "abstract" : "subject";
 const outlierMetadataKey = outlierMode === "abstract" ? "abstract_tfidf" : "subjects";
@@ -247,12 +255,20 @@ const outlierPoints = outlierAnalysis.map(d => ({
   cluster: `Cluster ${d[`${outlierFieldPrefix}_cluster`]}`
 }));
 const outlierClusters = Array.from(new Set(outlierPoints.map(d => d.cluster))).sort((a, b) => +a.slice(8) - +b.slice(8));
+return {outlierFieldPrefix,outlierMetadataKey,outlierNeighbourRepresentation,outlierPoints,outlierClusters};
+}});
+
+define({id: "9d367912", inputs: ["view","Inputs","outlierClusters"], outputs: ["outlierClusterFilter"], body: (view,Inputs,outlierClusters) => {
 const outlierClusterFilter = view(Inputs.select(["All clusters", ...outlierClusters], {label: "Show cluster", value: "All clusters"}));
+return {outlierClusterFilter};
+}});
+
+define({id: "29b4878c", inputs: ["outlierClusterFilter","outlierPoints","outlierMetadata","outlierMetadataKey","display","html","outlierMode"], outputs: ["visibleOutlierPoints","outlierDimensionSettings","outlierPcaVariance"], body: (outlierClusterFilter,outlierPoints,outlierMetadata,outlierMetadataKey,display,html,outlierMode) => {
 const visibleOutlierPoints = outlierClusterFilter === "All clusters" ? outlierPoints : outlierPoints.filter(d => d.cluster === outlierClusterFilter);
 const outlierDimensionSettings = outlierMetadata.dimensionality_reduction[outlierMetadataKey];
 const outlierPcaVariance = outlierDimensionSettings.pca.explained_variance_ratio.reduce((total, value) => total + value, 0);
 display(html`<div class="card"><strong>${outlierPoints.length} explicitly listed outliers</strong><br><small>${outlierMode === "abstract" ? "Abstracts (TF-IDF)" : "Subjects / themes"}: ${outlierMetadata.representations[outlierMetadataKey].feature_count} features · ${outlierMetadata.clustering[outlierMetadataKey].selected_k} clusters selected by cosine silhouette score · PCA axes explain ${(outlierPcaVariance * 100).toFixed(1)}% together.</small></div>`);
-return {outlierMode,outlierProjection,outlierFieldPrefix,outlierMetadataKey,outlierNeighbourRepresentation,outlierPoints,outlierClusters,outlierClusterFilter,visibleOutlierPoints,outlierDimensionSettings,outlierPcaVariance};
+return {visibleOutlierPoints,outlierDimensionSettings,outlierPcaVariance};
 }});
 
 define({id: "5983c6c4", inputs: ["display","Plot","outlierProjection","visibleOutlierPoints"], body: (display,Plot,outlierProjection,visibleOutlierPoints) => {
@@ -293,10 +309,14 @@ display(html`<div class="card"><strong>${outlierClusterFilter === "All clusters"
 return {visibleOutlierArticles};
 }});
 
-define({id: "2e7b692b", inputs: ["view","Inputs","outlierPoints","outlierNeighbours","outlierNeighbourRepresentation","display","html"], outputs: ["outlierArticleTitle","selectedOutlierArticle","selectedOutlierNeighbours"], body: (view,Inputs,outlierPoints,outlierNeighbours,outlierNeighbourRepresentation,display,html) => {
+define({id: "fa44834a", inputs: ["view","Inputs","outlierPoints"], outputs: ["outlierArticleTitle"], body: (view,Inputs,outlierPoints) => {
 const outlierArticleTitle = view(Inputs.select(outlierPoints.map(d => d.title).sort(), {
   label: "Outlier article", value: outlierPoints[0]?.title
 }));
+return {outlierArticleTitle};
+}});
+
+define({id: "ab4a4e66", inputs: ["outlierPoints","outlierArticleTitle","outlierNeighbours","outlierNeighbourRepresentation","display","html"], outputs: ["selectedOutlierArticle","selectedOutlierNeighbours"], body: (outlierPoints,outlierArticleTitle,outlierNeighbours,outlierNeighbourRepresentation,display,html) => {
 const selectedOutlierArticle = outlierPoints.find(d => d.title === outlierArticleTitle);
 const selectedOutlierNeighbours = outlierNeighbours
   .filter(d => String(d.article_id) === String(selectedOutlierArticle?.id) && d.representation === outlierNeighbourRepresentation)
@@ -305,7 +325,7 @@ display(html`<div class="card"><strong>${selectedOutlierArticle ? selectedOutlie
   const neighbour = outlierPoints.find(article => String(article.id) === String(d.neighbour_id));
   return html`<tr><td>${d.rank}</td><td>${neighbour?.url ? html`<a href=${neighbour.url} target="_blank" rel="noopener">${d.neighbour_title}</a>` : d.neighbour_title}</td><td>${d.neighbour_year}</td><td>${(+d.cosine_similarity).toFixed(3)}</td></tr>`;
 })}</tbody></table></div>`);
-return {outlierArticleTitle,selectedOutlierArticle,selectedOutlierNeighbours};
+return {selectedOutlierArticle,selectedOutlierNeighbours};
 }});
 
 </script>
@@ -346,17 +366,22 @@ return {outlierArticleTitle,selectedOutlierArticle,selectedOutlierNeighbours};
 <div class="note">The article links deliberately point to the DOI landing pages supplied by the corpus, so each charted claim can be checked against the published item.</div>
 <h2 id="outlier-similarity-analysis" tabindex="-1"><a class="observablehq-header-anchor" href="#outlier-similarity-analysis">Outlier similarity analysis</a></h2>
 <p>This analysis is limited to the 26 recent boundary/outlier articles identified in the review list. It asks whether they nevertheless form local patterns: the subject view uses the complete controlled <code>subject_tags</code> assigned to each article, while the abstract view uses bilingual word-and-bigram TF-IDF. PCA and UMAP are alternative two-dimensional views of the same underlying representation; clusters and nearest neighbours are calculated from the original feature space, not from the displayed coordinates.</p>
-<div class="observablehq observablehq--block"><!--:de3b86b9:--></div>
+<div class="observablehq observablehq--block"><!--:c2e2b146:--></div>
+<div class="observablehq observablehq--block"><!--:69cf5ee8:--></div>
+<div class="observablehq observablehq--block"><!--:fc3d4fb1:--></div>
+<div class="observablehq observablehq--block"><!--:9d367912:--></div>
+<div class="observablehq observablehq--block"><!--:29b4878c:--></div>
 <div class="observablehq observablehq--block"><!--:5983c6c4:--></div>
 <div class="observablehq observablehq--block"><!--:ff4c571b:--></div>
 <div class="observablehq observablehq--block"><!--:f10b09fd:--></div>
 <h2 id="inspect-cosine-neighbours" tabindex="-1"><a class="observablehq-header-anchor" href="#inspect-cosine-neighbours">Inspect cosine neighbours</a></h2>
 <p>Select an article to see its closest other outliers in the current representation. The score is cosine similarity (1 = identical feature direction; 0 = no overlap). Read the linked articles before treating a proximity as a substantive relationship.</p>
-<div class="observablehq observablehq--block"><!--:2e7b692b:--></div>
+<div class="observablehq observablehq--block"><!--:fa44834a:--></div>
+<div class="observablehq observablehq--block"><!--:ab4a4e66:--></div>
 <div class="note">Reproducibility: the exported source hashes, feature construction, PCA and UMAP settings, clustering candidates and silhouette scores, package versions, and execution settings are retained in <code>data/outlier-analysis/analysis_metadata.json</code>.</div>
 </main>
 <footer id="observablehq-footer">
-<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-11-05T04:11:16">Nov 5, 2026</a>.</div>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2026-11-05T04:22:05">Nov 5, 2026</a>.</div>
 </footer>
 </div>
 </body>
